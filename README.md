@@ -2,30 +2,30 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
 
-En Home Assistant integration der opretter sensorer for kommende begivenheder – fødselsdage, bryllupsdag, og éngangsbegivenheder.
+A Home Assistant integration that creates sensors for upcoming events – birthdays, anniversaries, and one-time events.
 
 ## Installation via HACS
 
-1. Tilføj dette repository som **Custom Repository** i HACS (kategori: Integration)
-2. Find "Event Countdown" i HACS og installér
-3. Genstart Home Assistant
-4. Gå til **Indstillinger → Enheder & tjenester → Tilføj integration** og søg efter "Event Countdown"
+1. Add this repository as a **Custom Repository** in HACS (category: Integration)
+2. Find "Event Countdown" in HACS and install
+3. Restart Home Assistant
+4. Go to **Settings → Devices & Services → Add Integration** and search for "Event Countdown"
 
-## Opsætning
+## Configuration
 
-Under opsætning (og efterfølgende via **Konfigurer**) angiver du:
+During setup (and later via **Configure**) you specify:
 
-- **Antal sensorer** – hvor mange sensorer der oprettes (standard: 4)
-- **Begivenheder (JSON)** – en JSON-liste med dine begivenheder
+- **Number of sensors** – how many sensors to create (default: 4)
+- **Events (JSON)** – a JSON list of your events
 
-Integrationerne opdateres automatisk hver time.
+The integration updates automatically every hour.
 
-## JSON-format
+## JSON format
 
 ```json
 [
   {
-    "name": "Frederiks fødselsdag",
+    "name": "Frederik's birthday",
     "day": 24,
     "month": 3,
     "year": 2015,
@@ -34,7 +34,7 @@ Integrationerne opdateres automatisk hver time.
     "picture": "/local/pic/frederik.jpg"
   },
   {
-    "name": "Bryllupsdag",
+    "name": "Wedding anniversary",
     "day": 24,
     "month": 9,
     "year": 2016,
@@ -42,7 +42,7 @@ Integrationerne opdateres automatisk hver time.
     "soon": 30
   },
   {
-    "name": "Sommerferie",
+    "name": "Summer holiday",
     "day": 5,
     "month": 7,
     "year": 2026,
@@ -52,39 +52,39 @@ Integrationerne opdateres automatisk hver time.
 ]
 ```
 
-### Felter
+### Fields
 
-| Felt | Påkrævet | Beskrivelse |
-|------|----------|-------------|
-| `name` | Ja | Navn på begivenheden |
-| `day` | Ja | Dag (1-31) |
-| `month` | Ja | Måned (1-12) |
-| `year` | Nej | Fødselsår / stiftelsesår - bruges til at beregne alder |
-| `type` | Nej | `fødselsdag` (standard), `bryllup`, eller `begivenhed` |
-| `soon` | Nej | Antal dage inden begivenheden markeres som "snart" (standard: 60) |
-| `picture` | Nej | Sti til billede, f.eks. `/local/pic/navn.jpg` |
-| `disabled` | Nej | Sæt til `true` for at springe begivenheden over |
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Name of the event |
+| `day` | Yes | Day (1-31) |
+| `month` | Yes | Month (1-12) |
+| `year` | No | Birth year / founding year – used to calculate age |
+| `type` | No | `fødselsdag` (default), `bryllup`, or `begivenhed` |
+| `soon` | No | Days before the event is marked as "soon" (default: 60) |
+| `picture` | No | Path to image, e.g. `/local/pic/name.jpg` |
+| `disabled` | No | Set to `true` to skip the event |
 
-### Typer
+### Event types
 
-- **`fødselsdag`** – tilbagevendende hvert år, beregner alder automatisk
-- **`bryllup`** – tilbagevendende hvert år, beregner årsdag automatisk
-- **`begivenhed`** – éngangsbegivenhed, springes over hvis datoen er passeret
+- **`fødselsdag`** (birthday) – repeats every year, calculates age automatically
+- **`bryllup`** (anniversary) – repeats every year, calculates years automatically
+- **`begivenhed`** (event) – one-time event, skipped once the date has passed
 
-## Sensorer
+## Sensors
 
-Integrationen opretter N sensorer (f.eks. `sensor.event_countdown_event_1`):
+The integration creates N sensors (e.g. `sensor.event_countdown_event_1`):
 
-- **State** – antal dage til begivenheden
-- **Attributter:**
-  - `full_name` – læsevenlig tekst, f.eks. *"Frederik 11 års fødselsdag om 5 dage"*
-  - `name` – begivenhedens navn
-  - `type` – begivenhedstype
-  - `age` – beregnet alder/årsdag
-  - `days_remaining` – antal dage tilbage
-  - `soon` – `true` hvis inden for tærsklen
-  - `soon_threshold` – tærsklen i dage
-  - `event_date` – begivenhedens originale dato (YYYY-MM-DD)
-  - `entity_picture` – sti til billede
+- **State** – number of days until the event
+- **Attributes:**
+  - `full_name` – human-readable text, e.g. *"Frederik 11th birthday in 5 days"*
+  - `name` – event name
+  - `type` – event type
+  - `age` – calculated age / anniversary number
+  - `days_remaining` – days remaining
+  - `soon` – `true` if within the threshold
+  - `soon_threshold` – threshold in days
+  - `event_date` – original event date (YYYY-MM-DD)
+  - `entity_picture` – path to image
 
-Sensorerne sorteres: "snart"-begivenheder først, derefter stigende efter dage tilbage.
+Sensors are sorted: "soon" events first, then ascending by days remaining.
