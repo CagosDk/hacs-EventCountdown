@@ -33,10 +33,16 @@ class EventCountdownPanel extends HTMLElement {
   async _init() {
     this._setHtml(`<div class="loading"><div class="spinner"></div><span>Loading…</span></div>`);
     try {
+      if (!this._hass || !this._hass.callWS) {
+        throw new Error("Home Assistant websocket not available");
+      }
       this._config = await this._hass.callWS({ type: "event_countdown/get_config" });
       this._render();
     } catch (err) {
-      this._setHtml(`<div class="error">Could not load configuration: ${err.message}</div>`);
+      const hint = err.message && err.message.includes("not_found")
+        ? "Integration not found. Make sure Event Countdown is installed and restart Home Assistant."
+        : `Could not load configuration: ${err.message}. Try restarting Home Assistant.`;
+      this._setHtml(`<div class="error"><b>Event Countdown</b><br><br>${hint}</div>`);
     }
   }
 
