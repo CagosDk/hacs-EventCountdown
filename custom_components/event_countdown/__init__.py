@@ -35,8 +35,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             async_register_built_in_panel(
                 hass,
                 "custom",
-                sidebar_title="Event Countdown",
-                sidebar_icon="mdi:calendar-clock",
+                sidebar_title=None,   # hidden from sidebar
+                sidebar_icon=None,
                 frontend_url_path="event-countdown",
                 config={
                     "_panel_custom": {
