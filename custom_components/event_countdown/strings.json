@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Event Countdown",
-        "description": "Click Submit to install Event Countdown. Manage events by clicking **Configure** on the integration."
+        "description": "Click Submit to install. Manage events by clicking **Configure** on the integration."
       }
     }
   },
@@ -11,7 +11,58 @@
     "step": {
       "init": {
         "title": "Event Countdown",
-        "description": "Click the link below to add, edit and delete events.\n\n[Open Event Countdown manager](/event-countdown)"
+        "menu_options": {
+          "add_event": "Add new event",
+          "edit_event": "Edit an event",
+          "delete_event": "Delete an event",
+          "settings": "Sensor settings",
+          "save": "Save and close"
+        }
+      },
+      "add_event": {
+        "title": "Add event",
+        "data": {
+          "name": "Name",
+          "day": "Day",
+          "month": "Month",
+          "year": "Year (for age calculation)",
+          "type": "Type",
+          "soon": "Days before marked as soon",
+          "picture": "Picture path (optional)",
+          "recurring": "Repeats every year",
+          "disabled": "Disabled (skip this event)"
+        }
+      },
+      "edit_event": {
+        "title": "Edit event",
+        "data": {
+          "event_index": "Select event to edit",
+          "name": "Name",
+          "day": "Day",
+          "month": "Month",
+          "year": "Year (for age calculation)",
+          "type": "Type",
+          "soon": "Days before marked as soon",
+          "picture": "Picture path (optional)",
+          "recurring": "Repeats every year",
+          "disabled": "Disabled (skip this event)"
+        }
+      },
+      "delete_event": {
+        "title": "Delete event",
+        "description": "Select the event to permanently delete.",
+        "data": {
+          "event_index": "Select event to delete"
+        }
+      },
+      "settings": {
+        "title": "Sensor settings",
+        "data": {
+          "max_sensors": "Number of sensors"
+        },
+        "data_description": {
+          "max_sensors": "How many sensor slots to create (sensor.event_countdown_event_1 … N)"
+        }
       }
     }
   }
