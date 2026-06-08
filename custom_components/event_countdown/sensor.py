@@ -71,9 +71,13 @@ def _compute_events(events_json: str) -> list[dict]:
                 _LOGGER.error("Event Countdown: invalid date for '%s'", name)
                 continue
 
+            recurring = event.get("recurring")
+            if recurring is None:
+                recurring = event_type != "begivenhed"
+
             if target < today:
-                if event_type == "begivenhed":
-                    continue  # one-time past event – skip
+                if not recurring:
+                    continue
                 target = date(this_year + 1, month, day)
 
             days_remaining = (target - today).days
