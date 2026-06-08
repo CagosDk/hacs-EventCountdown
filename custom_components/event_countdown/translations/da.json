@@ -3,7 +3,15 @@
     "step": {
       "user": {
         "title": "Event Countdown",
-        "description": "Klik Submit for at installere Event Countdown. Tilføj og rediger begivenheder via **Event Countdown**-panelet i sidebaren."
+        "description": "Klik Submit for at installere Event Countdown. Rediger begivenheder ved at klikke **Konfigurer** på integrationen."
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Event Countdown",
+        "description": "Klik på linket nedenfor for at tilføje, redigere og slette begivenheder.\n\n[Åbn Event Countdown manager](/event-countdown)"
       }
     }
   }

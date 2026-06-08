@@ -3,7 +3,15 @@
     "step": {
       "user": {
         "title": "Event Countdown",
-        "description": "Click Submit to install Event Countdown. Add and manage events via the **Event Countdown** panel in the sidebar."
+        "description": "Click Submit to install Event Countdown. Manage events by clicking **Configure** on the integration."
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Event Countdown",
+        "description": "Click the link below to add, edit and delete events.\n\n[Open Event Countdown manager](/event-countdown)"
       }
     }
   }
