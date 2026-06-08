@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Event Countdown opsætning",
+        "description": "Angiv antal sensorer og dine begivenheder som JSON.",
+        "data": {
+          "max_sensors": "Antal sensorer",
+          "events": "Begivenheder (JSON)"
+        }
+      }
+    },
+    "error": {
+      "invalid_json": "Ugyldigt JSON-format. Tjek syntaksen og prøv igen."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Rediger Event Countdown",
+        "description": "Opdater antal sensorer og begivenheder.",
+        "data": {
+          "max_sensors": "Antal sensorer",
+          "events": "Begivenheder (JSON)"
+        }
+      }
+    },
+    "error": {
+      "invalid_json": "Ugyldigt JSON-format. Tjek syntaksen og prøv igen."
+    }
+  }
+}
