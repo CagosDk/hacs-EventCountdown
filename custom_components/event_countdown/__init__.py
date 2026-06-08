@@ -5,7 +5,6 @@ from pathlib import Path
 import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.components.frontend import async_register_built_in_panel
-from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -16,28 +15,41 @@ PLATFORMS = ["sensor"]
 _PANEL_KEY = "panel_registered"
 
 
+async def _register_static_path(hass: HomeAssistant, url_path: str, path: str) -> None:
+    try:
+        from homeassistant.components.http import StaticPathConfig  # HA 2024.4+
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(url_path, path, cache_headers=False)]
+        )
+    except (ImportError, AttributeError):
+        hass.http.register_static_path(url_path, path, False)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
 
     if not hass.data[DOMAIN].get(_PANEL_KEY):
         www_path = Path(__file__).parent / "www"
-        await hass.http.async_register_static_paths([
-            StaticPathConfig("/event_countdown_panel", str(www_path), cache_headers=False)
-        ])
-        async_register_built_in_panel(
-            hass,
-            "custom",
-            sidebar_title="Event Countdown",
-            sidebar_icon="mdi:calendar-clock",
-            frontend_url_path="event-countdown",
-            config={
-                "_panel_custom": {
-                    "name": "event-countdown-panel",
-                    "module_url": "/event_countdown_panel/event-countdown-panel.js",
-                }
-            },
-            require_admin=False,
-        )
+        try:
+            await _register_static_path(hass, "/event_countdown_panel", str(www_path))
+            async_register_built_in_panel(
+                hass,
+                "custom",
+                sidebar_title="Event Countdown",
+                sidebar_icon="mdi:calendar-clock",
+                frontend_url_path="event-countdown",
+                config={
+                    "_panel_custom": {
+                        "name": "event-countdown-panel",
+                        "module_url": "/event_countdown_panel/event-countdown-panel.js",
+                    }
+                },
+                require_admin=False,
+            )
+            _LOGGER.debug("Event Countdown panel registered")
+        except Exception:
+            _LOGGER.exception("Event Countdown: could not register sidebar panel")
+
         websocket_api.async_register_command(hass, websocket_get_config)
         websocket_api.async_register_command(hass, websocket_save_config)
         hass.data[DOMAIN][_PANEL_KEY] = True
