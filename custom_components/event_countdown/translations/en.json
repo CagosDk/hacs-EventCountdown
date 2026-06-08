@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Event Countdown setup",
+        "description": "Set the number of sensors and provide your events as JSON.",
+        "data": {
+          "max_sensors": "Number of sensors",
+          "events": "Events (JSON)"
+        }
+      }
+    },
+    "error": {
+      "invalid_json": "Invalid JSON format. Check the syntax and try again."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit Event Countdown",
+        "description": "Update the number of sensors and events.",
+        "data": {
+          "max_sensors": "Number of sensors",
+          "events": "Events (JSON)"
+        }
+      }
+    },
+    "error": {
+      "invalid_json": "Invalid JSON format. Check the syntax and try again."
+    }
+  }
+}
