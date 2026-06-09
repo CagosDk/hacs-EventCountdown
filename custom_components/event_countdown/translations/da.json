@@ -23,14 +23,19 @@
         "title": "Tilføj begivenhed",
         "data": {
           "name": "Navn",
-          "day": "Dag",
-          "month": "Måned",
-          "year": "År (til aldersberegning)",
+          "event_date": "Dato",
           "type": "Type",
-          "soon": "Dage inden markeret som snart",
-          "picture": "Billedsti (valgfri)",
+          "soon": "\"Snart\"-tærskel (dage)",
+          "picture": "Billedsti",
           "recurring": "Gentages hvert år",
-          "disabled": "Deaktiveret (spring over)"
+          "disabled": "Deaktiveret"
+        },
+        "data_description": {
+          "event_date": "Fødselsdage/bryllupsdag: brug den faktiske fødselsdato/bryllupsdag. Begivenheder: brug begivenhedens dato.",
+          "soon": "Begivenheden fremhæves når der er dette antal dage tilbage.",
+          "picture": "Valgfri. Sti til et lokalt billede, f.eks. /local/pic/navn.jpg",
+          "recurring": "Til = gentages hvert år (fødselsdage, bryllupsdag). Fra = springes over når datoen er passeret.",
+          "disabled": "Til = denne begivenhed ignoreres indtil den genaktiveres."
         }
       },
       "edit_event": {
@@ -38,19 +43,24 @@
         "data": {
           "event_index": "Vælg begivenhed at redigere",
           "name": "Navn",
-          "day": "Dag",
-          "month": "Måned",
-          "year": "År (til aldersberegning)",
+          "event_date": "Dato",
           "type": "Type",
-          "soon": "Dage inden markeret som snart",
-          "picture": "Billedsti (valgfri)",
+          "soon": "\"Snart\"-tærskel (dage)",
+          "picture": "Billedsti",
           "recurring": "Gentages hvert år",
-          "disabled": "Deaktiveret (spring over)"
+          "disabled": "Deaktiveret"
+        },
+        "data_description": {
+          "event_date": "Fødselsdage/bryllupsdag: brug den faktiske fødselsdato/bryllupsdag. Begivenheder: brug begivenhedens dato.",
+          "soon": "Begivenheden fremhæves når der er dette antal dage tilbage.",
+          "picture": "Valgfri. Sti til et lokalt billede, f.eks. /local/pic/navn.jpg",
+          "recurring": "Til = gentages hvert år (fødselsdage, bryllupsdag). Fra = springes over når datoen er passeret.",
+          "disabled": "Til = denne begivenhed ignoreres indtil den genaktiveres."
         }
       },
       "delete_event": {
         "title": "Slet begivenhed",
-        "description": "Vælg den begivenhed der skal slettes permanent.",
+        "description": "Vælg den begivenhed der skal slettes permanent. Dette kan ikke fortrydes.",
         "data": {
           "event_index": "Vælg begivenhed at slette"
         }
@@ -61,7 +71,7 @@
           "max_sensors": "Antal sensorer"
         },
         "data_description": {
-          "max_sensors": "Antal sensor-slots der oprettes (sensor.event_countdown_event_1 … N)"
+          "max_sensors": "Opretter sensor.event_countdown_event_1 til event_N. De N næste begivenheder vises, sorteret med den snareste først."
         }
       }
     }
