@@ -6,7 +6,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from .const import CONF_EVENTS, CONF_MAX_SENSORS, DEFAULT_MAX_SENSORS, DOMAIN
+from .const import CONF_EVENTS, DOMAIN
 
 _TYPE_OPTIONS = [
     {"value": "fødselsdag", "label": "Birthday 🎂"},
@@ -16,7 +16,6 @@ _TYPE_OPTIONS = [
 
 
 def _ev_date_str(ev: dict) -> str:
-    """Return YYYY-MM-DD string from event dict, falling back to today."""
     year = ev.get("year") or date.today().year
     month = ev.get("month") or 1
     day = ev.get("day") or 1
@@ -82,13 +81,13 @@ def _form_to_event(user_input: dict) -> dict:
 
 
 class EventCountdownConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
             return self.async_create_entry(
                 title="Event Countdown",
-                data={CONF_MAX_SENSORS: DEFAULT_MAX_SENSORS, CONF_EVENTS: "[]"},
+                data={CONF_EVENTS: "[]"},
             )
         return self.async_show_form(step_id="user")
 
@@ -102,7 +101,6 @@ class EventCountdownOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry) -> None:
         self._config_entry = config_entry
         self._events: list[dict] = []
-        self._max_sensors: int = DEFAULT_MAX_SENSORS
         self._initialized = False
         self._edit_index: int | None = None
 
@@ -115,16 +113,12 @@ class EventCountdownOptionsFlow(config_entries.OptionsFlow):
                 self._events = json.loads(raw)
             except (json.JSONDecodeError, ValueError):
                 self._events = []
-            self._max_sensors = self._config_entry.options.get(
-                CONF_MAX_SENSORS,
-                self._config_entry.data.get(CONF_MAX_SENSORS, DEFAULT_MAX_SENSORS),
-            )
             self._initialized = True
 
         menu_options = ["add_event"]
         if self._events:
             menu_options += ["edit_event", "delete_event"]
-        menu_options += ["settings", "save"]
+        menu_options.append("save")
 
         return self.async_show_menu(step_id="init", menu_options=menu_options)
 
@@ -189,30 +183,8 @@ class EventCountdownOptionsFlow(config_entries.OptionsFlow):
             ),
         )
 
-    async def async_step_settings(self, user_input=None):
-        if user_input is not None:
-            self._max_sensors = int(user_input[CONF_MAX_SENSORS])
-            return await self.async_step_init()
-        return self.async_show_form(
-            step_id="settings",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_MAX_SENSORS, default=self._max_sensors
-                    ): selector.NumberSelector(
-                        selector.NumberSelectorConfig(
-                            min=1, max=20, step=1, mode=selector.NumberSelectorMode.SLIDER
-                        )
-                    ),
-                }
-            ),
-        )
-
     async def async_step_save(self, user_input=None):
         return self.async_create_entry(
             title="",
-            data={
-                CONF_EVENTS: json.dumps(self._events, ensure_ascii=False),
-                CONF_MAX_SENSORS: self._max_sensors,
-            },
+            data={CONF_EVENTS: json.dumps(self._events, ensure_ascii=False)},
         )

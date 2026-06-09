@@ -15,7 +15,6 @@
           "add_event": "Add new event",
           "edit_event": "Edit an event",
           "delete_event": "Delete an event",
-          "settings": "Sensor settings",
           "save": "Save and close"
         }
       },
@@ -31,7 +30,7 @@
           "disabled": "Disabled"
         },
         "data_description": {
-          "event_date": "For birthdays and anniversaries: use the actual birth/wedding date. For one-time events: use the event date.",
+          "event_date": "For birthdays and anniversaries: use the birth/wedding date. For one-time events: use the event date.",
           "soon": "The event will be highlighted when this many days remain.",
           "picture": "Optional. Path to a local image, e.g. /local/pic/name.jpg",
           "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
@@ -51,7 +50,7 @@
           "disabled": "Disabled"
         },
         "data_description": {
-          "event_date": "For birthdays and anniversaries: use the actual birth/wedding date. For one-time events: use the event date.",
+          "event_date": "For birthdays and anniversaries: use the birth/wedding date. For one-time events: use the event date.",
           "soon": "The event will be highlighted when this many days remain.",
           "picture": "Optional. Path to a local image, e.g. /local/pic/name.jpg",
           "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
@@ -63,15 +62,6 @@
         "description": "Select the event to permanently delete. This cannot be undone.",
         "data": {
           "event_index": "Select event to delete"
-        }
-      },
-      "settings": {
-        "title": "Sensor settings",
-        "data": {
-          "max_sensors": "Number of sensors"
-        },
-        "data_description": {
-          "max_sensors": "Creates sensor.event_countdown_event_1 through event_N. The N upcoming events are shown, sorted by soonest first."
         }
       }
     }
