@@ -3,46 +3,40 @@
     "step": {
       "user": {
         "title": "Event Countdown",
-        "description": "Click Submit to install. Manage events by clicking **Configure** on the integration."
+        "description": "Click Submit to create the global configuration. Use **Add Entry** on the integration to add events."
+      },
+      "event": {
+        "title": "Add event",
+        "data": {
+          "name": "Name",
+          "day": "Day",
+          "month": "Month",
+          "year": "Year",
+          "type": "Type",
+          "soon": "\"Soon\" threshold (days)",
+          "picture": "Picture path",
+          "recurring": "Repeats every year",
+          "disabled": "Disabled"
+        },
+        "data_description": {
+          "year": "Birth year / founding year — used to calculate age. Leave empty if unknown.",
+          "soon": "Highlighted as upcoming when this many days remain.",
+          "picture": "Optional. Local image path, e.g. /local/pic/name.jpg",
+          "recurring": "On = repeats every year. Off = skipped once the date has passed.",
+          "disabled": "On = ignored until re-enabled."
+        }
       }
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Event Countdown",
-        "menu_options": {
-          "add_event": "Add new event",
-          "edit_event": "Edit an event",
-          "delete_event": "Delete an event",
-          "save": "Save and close"
-        }
-      },
-      "add_event": {
-        "title": "Add event",
-        "data": {
-          "name": "Name",
-          "event_date": "Date",
-          "type": "Type",
-          "soon": "\"Soon\" threshold (days)",
-          "picture": "Picture path",
-          "recurring": "Repeats every year",
-          "disabled": "Disabled"
-        },
-        "data_description": {
-          "event_date": "For birthdays and anniversaries: use the birth/wedding date. For one-time events: use the event date.",
-          "soon": "The event will be highlighted when this many days remain.",
-          "picture": "Optional. Path to a local image, e.g. /local/pic/name.jpg",
-          "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
-          "disabled": "On = this event is ignored until re-enabled."
-        }
-      },
-      "edit_event": {
         "title": "Edit event",
         "data": {
-          "event_index": "Select event to edit",
           "name": "Name",
-          "event_date": "Date",
+          "day": "Day",
+          "month": "Month",
+          "year": "Year",
           "type": "Type",
           "soon": "\"Soon\" threshold (days)",
           "picture": "Picture path",
@@ -50,18 +44,11 @@
           "disabled": "Disabled"
         },
         "data_description": {
-          "event_date": "For birthdays and anniversaries: use the birth/wedding date. For one-time events: use the event date.",
-          "soon": "The event will be highlighted when this many days remain.",
-          "picture": "Optional. Path to a local image, e.g. /local/pic/name.jpg",
-          "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
-          "disabled": "On = this event is ignored until re-enabled."
-        }
-      },
-      "delete_event": {
-        "title": "Delete event",
-        "description": "Select the event to permanently delete. This cannot be undone.",
-        "data": {
-          "event_index": "Select event to delete"
+          "year": "Birth year / founding year — used to calculate age. Leave empty if unknown.",
+          "soon": "Highlighted as upcoming when this many days remain.",
+          "picture": "Optional. Local image path, e.g. /local/pic/name.jpg",
+          "recurring": "On = repeats every year. Off = skipped once the date has passed.",
+          "disabled": "On = ignored until re-enabled."
         }
       }
     }
