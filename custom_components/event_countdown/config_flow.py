@@ -1,28 +1,15 @@
-import json
-from datetime import date
-
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from .const import CONF_EVENTS, DOMAIN
+from .const import DOMAIN, ENTRY_TYPE_EVENT, ENTRY_TYPE_GLOBAL
 
 _TYPE_OPTIONS = [
     {"value": "fødselsdag", "label": "Birthday 🎂"},
     {"value": "bryllup", "label": "Anniversary 💍"},
     {"value": "begivenhed", "label": "Event 📅"},
 ]
-
-
-def _ev_date_str(ev: dict) -> str:
-    year = ev.get("year") or date.today().year
-    month = ev.get("month") or 1
-    day = ev.get("day") or 1
-    try:
-        return date(int(year), int(month), int(day)).isoformat()
-    except ValueError:
-        return date.today().isoformat()
 
 
 def _event_schema(event: dict | None = None) -> vol.Schema:
@@ -36,7 +23,20 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
             vol.Required("name", default=ev.get("name", "")): selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
             ),
-            vol.Required("event_date", default=_ev_date_str(ev)): selector.DateSelector(),
+            vol.Required("day", default=int(ev.get("day", 1))): selector.NumberSelector(
+                selector.NumberSelectorConfig(min=1, max=31, mode=selector.NumberSelectorMode.BOX)
+            ),
+            vol.Required("month", default=int(ev.get("month", 1))): selector.NumberSelector(
+                selector.NumberSelectorConfig(min=1, max=12, mode=selector.NumberSelectorMode.BOX)
+            ),
+            vol.Optional(
+                "year",
+                description={"suggested_value": ev.get("year")},
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1900, max=2100, mode=selector.NumberSelectorMode.BOX
+                )
+            ),
             vol.Required("type", default=ev.get("type", "fødselsdag")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=_TYPE_OPTIONS,
@@ -63,16 +63,16 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
 
 
 def _form_to_event(user_input: dict) -> dict:
-    year, month, day = (int(x) for x in user_input["event_date"].split("-"))
     event: dict = {
         "name": user_input["name"],
-        "day": day,
-        "month": month,
-        "year": year,
+        "day": int(user_input["day"]),
+        "month": int(user_input["month"]),
         "type": user_input["type"],
         "soon": int(user_input["soon"]),
         "recurring": user_input["recurring"],
     }
+    if user_input.get("year") is not None:
+        event["year"] = int(user_input["year"])
     if user_input.get("picture"):
         event["picture"] = user_input["picture"]
     if user_input.get("disabled"):
@@ -80,111 +80,79 @@ def _form_to_event(user_input: dict) -> dict:
     return event
 
 
+# ── Config flow (initial install + adding events) ─────────────────────────────
+
 class EventCountdownConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 2
+    VERSION = 3
 
     async def async_step_user(self, user_input=None):
-        if user_input is not None:
+        # Check whether the global config entry already exists
+        existing = self.hass.config_entries.async_entries(DOMAIN)
+        has_global = any(e.data.get("entry_type") == ENTRY_TYPE_GLOBAL for e in existing)
+
+        if not has_global:
+            # First install: silently create the global entry
             return self.async_create_entry(
-                title="Event Countdown",
-                data={CONF_EVENTS: "[]"},
+                title="Global Configuration",
+                data={"entry_type": ENTRY_TYPE_GLOBAL},
             )
-        return self.async_show_form(step_id="user")
+
+        # Subsequent "Add": go straight to the event form
+        return await self.async_step_event()
+
+    async def async_step_event(self, user_input=None):
+        if user_input is not None:
+            event = _form_to_event(user_input)
+            return self.async_create_entry(
+                title=event["name"],
+                data={"entry_type": ENTRY_TYPE_EVENT, "event": event},
+            )
+        return self.async_show_form(step_id="event", data_schema=_event_schema())
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return EventCountdownOptionsFlow(config_entry)
+        if config_entry.data.get("entry_type") == ENTRY_TYPE_GLOBAL:
+            return GlobalOptionsFlow(config_entry)
+        return EventOptionsFlow(config_entry)
 
 
-class EventCountdownOptionsFlow(config_entries.OptionsFlow):
+# ── Global options flow ───────────────────────────────────────────────────────
+
+class GlobalOptionsFlow(config_entries.OptionsFlow):
+    """Global settings — placeholder for future global options."""
+
     def __init__(self, config_entry) -> None:
         self._config_entry = config_entry
-        self._events: list[dict] = []
-        self._initialized = False
-        self._edit_index: int | None = None
 
     async def async_step_init(self, user_input=None):
-        if not self._initialized:
-            raw = self._config_entry.options.get(
-                CONF_EVENTS, self._config_entry.data.get(CONF_EVENTS, "[]")
-            )
-            try:
-                self._events = json.loads(raw)
-            except (json.JSONDecodeError, ValueError):
-                self._events = []
-            self._initialized = True
-
-        menu_options = ["add_event"]
-        if self._events:
-            menu_options += ["edit_event", "delete_event"]
-        menu_options.append("save")
-
-        return self.async_show_menu(step_id="init", menu_options=menu_options)
-
-    async def async_step_add_event(self, user_input=None):
         if user_input is not None:
-            self._events.append(_form_to_event(user_input))
-            return await self.async_step_init()
-        return self.async_show_form(step_id="add_event", data_schema=_event_schema())
+            return self.async_create_entry(title="", data=user_input)
+        return self.async_show_form(step_id="init", data_schema=vol.Schema({}))
 
-    async def async_step_edit_event(self, user_input=None):
+
+# ── Per-event options flow ────────────────────────────────────────────────────
+
+class EventOptionsFlow(config_entries.OptionsFlow):
+    """Edit a single event's settings."""
+
+    def __init__(self, config_entry) -> None:
+        self._config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        # Merge saved options on top of original data
+        saved = {
+            **self._config_entry.data.get("event", {}),
+            **self._config_entry.options,
+        }
         if user_input is not None:
-            if self._edit_index is not None:
-                self._events[self._edit_index] = _form_to_event(user_input)
-                self._edit_index = None
-                return await self.async_step_init()
-            self._edit_index = int(user_input["event_index"])
-            return self.async_show_form(
-                step_id="edit_event",
-                data_schema=_event_schema(self._events[self._edit_index]),
+            event = _form_to_event(user_input)
+            # Update the entry title to reflect possible name change
+            self.hass.config_entries.async_update_entry(
+                self._config_entry, title=event["name"]
             )
-
-        if self._edit_index is None:
-            return self.async_show_form(
-                step_id="edit_event",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required("event_index"): selector.SelectSelector(
-                            selector.SelectSelectorConfig(
-                                options=[
-                                    {"value": str(i), "label": e["name"]}
-                                    for i, e in enumerate(self._events)
-                                ],
-                                mode=selector.SelectSelectorMode.LIST,
-                            )
-                        )
-                    }
-                ),
-            )
+            return self.async_create_entry(title="", data=event)
         return self.async_show_form(
-            step_id="edit_event",
-            data_schema=_event_schema(self._events[self._edit_index]),
-        )
-
-    async def async_step_delete_event(self, user_input=None):
-        if user_input is not None:
-            self._events.pop(int(user_input["event_index"]))
-            return await self.async_step_init()
-        return self.async_show_form(
-            step_id="delete_event",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("event_index"): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=[
-                                {"value": str(i), "label": e["name"]}
-                                for i, e in enumerate(self._events)
-                            ],
-                            mode=selector.SelectSelectorMode.LIST,
-                        )
-                    )
-                }
-            ),
-        )
-
-    async def async_step_save(self, user_input=None):
-        return self.async_create_entry(
-            title="",
-            data={CONF_EVENTS: json.dumps(self._events, ensure_ascii=False)},
+            step_id="init",
+            data_schema=_event_schema(saved),
         )

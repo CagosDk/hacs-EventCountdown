@@ -3,46 +3,40 @@
     "step": {
       "user": {
         "title": "Event Countdown",
-        "description": "Klik Submit for at installere. Rediger begivenheder ved at klikke **Konfigurer** på integrationen."
+        "description": "Klik Submit for at oprette den globale konfiguration. Brug **Tilføj emne** på integrationen for at tilføje begivenheder."
+      },
+      "event": {
+        "title": "Tilføj begivenhed",
+        "data": {
+          "name": "Navn",
+          "day": "Dag",
+          "month": "Måned",
+          "year": "År",
+          "type": "Type",
+          "soon": "\"Snart\"-tærskel (dage)",
+          "picture": "Billedsti",
+          "recurring": "Gentages hvert år",
+          "disabled": "Deaktiveret"
+        },
+        "data_description": {
+          "year": "Fødselsår / stiftelsesår — bruges til aldersberegning. Efterlad tom hvis ukendt.",
+          "soon": "Fremhæves som kommende når dette antal dage er tilbage.",
+          "picture": "Valgfri. Lokal billedsti, f.eks. /local/pic/navn.jpg",
+          "recurring": "Til = gentages hvert år. Fra = springes over når datoen er passeret.",
+          "disabled": "Til = ignoreres indtil genaktiveret."
+        }
       }
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Event Countdown",
-        "menu_options": {
-          "add_event": "Tilføj begivenhed",
-          "edit_event": "Rediger begivenhed",
-          "delete_event": "Slet begivenhed",
-          "save": "Gem og luk"
-        }
-      },
-      "add_event": {
-        "title": "Tilføj begivenhed",
-        "data": {
-          "name": "Navn",
-          "event_date": "Dato",
-          "type": "Type",
-          "soon": "\"Snart\"-tærskel (dage)",
-          "picture": "Billedsti",
-          "recurring": "Gentages hvert år",
-          "disabled": "Deaktiveret"
-        },
-        "data_description": {
-          "event_date": "Fødselsdage/bryllupsdag: brug den faktiske fødselsdato/bryllupsdag. Begivenheder: brug begivenhedens dato.",
-          "soon": "Begivenheden fremhæves når der er dette antal dage tilbage.",
-          "picture": "Valgfri. Sti til et lokalt billede, f.eks. /local/pic/navn.jpg",
-          "recurring": "Til = gentages hvert år (fødselsdage, bryllupsdag). Fra = springes over når datoen er passeret.",
-          "disabled": "Til = denne begivenhed ignoreres indtil den genaktiveres."
-        }
-      },
-      "edit_event": {
         "title": "Rediger begivenhed",
         "data": {
-          "event_index": "Vælg begivenhed at redigere",
           "name": "Navn",
-          "event_date": "Dato",
+          "day": "Dag",
+          "month": "Måned",
+          "year": "År",
           "type": "Type",
           "soon": "\"Snart\"-tærskel (dage)",
           "picture": "Billedsti",
@@ -50,18 +44,11 @@
           "disabled": "Deaktiveret"
         },
         "data_description": {
-          "event_date": "Fødselsdage/bryllupsdag: brug den faktiske fødselsdato/bryllupsdag. Begivenheder: brug begivenhedens dato.",
-          "soon": "Begivenheden fremhæves når der er dette antal dage tilbage.",
-          "picture": "Valgfri. Sti til et lokalt billede, f.eks. /local/pic/navn.jpg",
-          "recurring": "Til = gentages hvert år (fødselsdage, bryllupsdag). Fra = springes over når datoen er passeret.",
-          "disabled": "Til = denne begivenhed ignoreres indtil den genaktiveres."
-        }
-      },
-      "delete_event": {
-        "title": "Slet begivenhed",
-        "description": "Vælg den begivenhed der skal slettes permanent. Dette kan ikke fortrydes.",
-        "data": {
-          "event_index": "Vælg begivenhed at slette"
+          "year": "Fødselsår / stiftelsesår — bruges til aldersberegning. Efterlad tom hvis ukendt.",
+          "soon": "Fremhæves som kommende når dette antal dage er tilbage.",
+          "picture": "Valgfri. Lokal billedsti, f.eks. /local/pic/navn.jpg",
+          "recurring": "Til = gentages hvert år. Fra = springes over når datoen er passeret.",
+          "disabled": "Til = ignoreres indtil genaktiveret."
         }
       }
     }
