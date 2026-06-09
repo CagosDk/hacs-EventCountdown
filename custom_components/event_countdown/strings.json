@@ -23,14 +23,19 @@
         "title": "Add event",
         "data": {
           "name": "Name",
-          "day": "Day",
-          "month": "Month",
-          "year": "Year (for age calculation)",
+          "event_date": "Date",
           "type": "Type",
-          "soon": "Days before marked as soon",
-          "picture": "Picture path (optional)",
+          "soon": "\"Soon\" threshold (days)",
+          "picture": "Picture path",
           "recurring": "Repeats every year",
-          "disabled": "Disabled (skip this event)"
+          "disabled": "Disabled"
+        },
+        "data_description": {
+          "event_date": "For birthdays and anniversaries: use the actual birth/wedding date. For one-time events: use the event date.",
+          "soon": "The event will be highlighted when this many days remain.",
+          "picture": "Optional. Path to a local image, e.g. /local/pic/name.jpg",
+          "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
+          "disabled": "On = this event is ignored until re-enabled."
         }
       },
       "edit_event": {
@@ -38,19 +43,24 @@
         "data": {
           "event_index": "Select event to edit",
           "name": "Name",
-          "day": "Day",
-          "month": "Month",
-          "year": "Year (for age calculation)",
+          "event_date": "Date",
           "type": "Type",
-          "soon": "Days before marked as soon",
-          "picture": "Picture path (optional)",
+          "soon": "\"Soon\" threshold (days)",
+          "picture": "Picture path",
           "recurring": "Repeats every year",
-          "disabled": "Disabled (skip this event)"
+          "disabled": "Disabled"
+        },
+        "data_description": {
+          "event_date": "For birthdays and anniversaries: use the actual birth/wedding date. For one-time events: use the event date.",
+          "soon": "The event will be highlighted when this many days remain.",
+          "picture": "Optional. Path to a local image, e.g. /local/pic/name.jpg",
+          "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
+          "disabled": "On = this event is ignored until re-enabled."
         }
       },
       "delete_event": {
         "title": "Delete event",
-        "description": "Select the event to permanently delete.",
+        "description": "Select the event to permanently delete. This cannot be undone.",
         "data": {
           "event_index": "Select event to delete"
         }
@@ -61,7 +71,7 @@
           "max_sensors": "Number of sensors"
         },
         "data_description": {
-          "max_sensors": "How many sensor slots to create (sensor.event_countdown_event_1 … N)"
+          "max_sensors": "Creates sensor.event_countdown_event_1 through event_N. The N upcoming events are shown, sorted by soonest first."
         }
       }
     }

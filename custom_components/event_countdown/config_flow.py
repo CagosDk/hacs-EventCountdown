@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -14,6 +15,17 @@ _TYPE_OPTIONS = [
 ]
 
 
+def _ev_date_str(ev: dict) -> str:
+    """Return YYYY-MM-DD string from event dict, falling back to today."""
+    year = ev.get("year") or date.today().year
+    month = ev.get("month") or 1
+    day = ev.get("day") or 1
+    try:
+        return date(int(year), int(month), int(day)).isoformat()
+    except ValueError:
+        return date.today().isoformat()
+
+
 def _event_schema(event: dict | None = None) -> vol.Schema:
     ev = event or {}
     recurring = ev.get("recurring")
@@ -22,21 +34,10 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
 
     return vol.Schema(
         {
-            vol.Required("name", default=ev.get("name", "")): selector.TextSelector(),
-            vol.Required("day", default=int(ev.get("day", 1))): selector.NumberSelector(
-                selector.NumberSelectorConfig(min=1, max=31, mode=selector.NumberSelectorMode.BOX)
+            vol.Required("name", default=ev.get("name", "")): selector.TextSelector(
+                selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
             ),
-            vol.Required("month", default=int(ev.get("month", 1))): selector.NumberSelector(
-                selector.NumberSelectorConfig(min=1, max=12, mode=selector.NumberSelectorMode.BOX)
-            ),
-            vol.Optional(
-                "year",
-                description={"suggested_value": ev.get("year")},
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=1900, max=2100, mode=selector.NumberSelectorMode.BOX
-                )
-            ),
+            vol.Required("event_date", default=_ev_date_str(ev)): selector.DateSelector(),
             vol.Required("type", default=ev.get("type", "fødselsdag")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=_TYPE_OPTIONS,
@@ -44,29 +45,35 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
                 )
             ),
             vol.Required("soon", default=int(ev.get("soon", 30))): selector.NumberSelector(
-                selector.NumberSelectorConfig(min=1, max=365, mode=selector.NumberSelectorMode.BOX)
+                selector.NumberSelectorConfig(
+                    min=1, max=180, step=1, mode=selector.NumberSelectorMode.SLIDER
+                )
             ),
             vol.Optional(
                 "picture",
                 description={"suggested_value": ev.get("picture", "")},
-            ): selector.TextSelector(),
+            ): selector.TextSelector(
+                selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+            ),
             vol.Required("recurring", default=bool(recurring)): selector.BooleanSelector(),
-            vol.Required("disabled", default=bool(ev.get("disabled", False))): selector.BooleanSelector(),
+            vol.Required(
+                "disabled", default=bool(ev.get("disabled", False))
+            ): selector.BooleanSelector(),
         }
     )
 
 
 def _form_to_event(user_input: dict) -> dict:
+    year, month, day = (int(x) for x in user_input["event_date"].split("-"))
     event: dict = {
         "name": user_input["name"],
-        "day": int(user_input["day"]),
-        "month": int(user_input["month"]),
+        "day": day,
+        "month": month,
+        "year": year,
         "type": user_input["type"],
         "soon": int(user_input["soon"]),
         "recurring": user_input["recurring"],
     }
-    if user_input.get("year") is not None:
-        event["year"] = int(user_input["year"])
     if user_input.get("picture"):
         event["picture"] = user_input["picture"]
     if user_input.get("disabled"):
@@ -99,8 +106,6 @@ class EventCountdownOptionsFlow(config_entries.OptionsFlow):
         self._initialized = False
         self._edit_index: int | None = None
 
-    # ── Init / main menu ──────────────────────────────────────────────────────
-
     async def async_step_init(self, user_input=None):
         if not self._initialized:
             raw = self._config_entry.options.get(
@@ -118,34 +123,23 @@ class EventCountdownOptionsFlow(config_entries.OptionsFlow):
 
         menu_options = ["add_event"]
         if self._events:
-            menu_options.append("edit_event")
-            menu_options.append("delete_event")
-        menu_options.append("settings")
-        menu_options.append("save")
+            menu_options += ["edit_event", "delete_event"]
+        menu_options += ["settings", "save"]
 
         return self.async_show_menu(step_id="init", menu_options=menu_options)
-
-    # ── Add event ─────────────────────────────────────────────────────────────
 
     async def async_step_add_event(self, user_input=None):
         if user_input is not None:
             self._events.append(_form_to_event(user_input))
             return await self.async_step_init()
-        return self.async_show_form(
-            step_id="add_event",
-            data_schema=_event_schema(),
-        )
-
-    # ── Edit event ────────────────────────────────────────────────────────────
+        return self.async_show_form(step_id="add_event", data_schema=_event_schema())
 
     async def async_step_edit_event(self, user_input=None):
         if user_input is not None:
             if self._edit_index is not None:
-                # Second call: save the edited event
                 self._events[self._edit_index] = _form_to_event(user_input)
                 self._edit_index = None
                 return await self.async_step_init()
-            # First call: user chose which event to edit
             self._edit_index = int(user_input["event_index"])
             return self.async_show_form(
                 step_id="edit_event",
@@ -153,7 +147,6 @@ class EventCountdownOptionsFlow(config_entries.OptionsFlow):
             )
 
         if self._edit_index is None:
-            # Show picker
             return self.async_show_form(
                 step_id="edit_event",
                 data_schema=vol.Schema(
@@ -175,12 +168,9 @@ class EventCountdownOptionsFlow(config_entries.OptionsFlow):
             data_schema=_event_schema(self._events[self._edit_index]),
         )
 
-    # ── Delete event ──────────────────────────────────────────────────────────
-
     async def async_step_delete_event(self, user_input=None):
         if user_input is not None:
-            index = int(user_input["event_index"])
-            self._events.pop(index)
+            self._events.pop(int(user_input["event_index"]))
             return await self.async_step_init()
         return self.async_show_form(
             step_id="delete_event",
@@ -199,8 +189,6 @@ class EventCountdownOptionsFlow(config_entries.OptionsFlow):
             ),
         )
 
-    # ── Settings ──────────────────────────────────────────────────────────────
-
     async def async_step_settings(self, user_input=None):
         if user_input is not None:
             self._max_sensors = int(user_input[CONF_MAX_SENSORS])
@@ -213,14 +201,12 @@ class EventCountdownOptionsFlow(config_entries.OptionsFlow):
                         CONF_MAX_SENSORS, default=self._max_sensors
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
-                            min=1, max=20, mode=selector.NumberSelectorMode.BOX
+                            min=1, max=20, step=1, mode=selector.NumberSelectorMode.SLIDER
                         )
                     ),
                 }
             ),
         )
-
-    # ── Save ──────────────────────────────────────────────────────────────────
 
     async def async_step_save(self, user_input=None):
         return self.async_create_entry(
