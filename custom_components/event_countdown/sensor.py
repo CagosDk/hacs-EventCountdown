@@ -8,10 +8,11 @@ from datetime import date, timedelta
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import CONF_EVENTS, CONF_MAX_SENSORS, DEFAULT_MAX_SENSORS, DOMAIN
+from .const import CONF_EVENTS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 _UPDATE_INTERVAL = timedelta(hours=1)
@@ -22,10 +23,13 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    max_sensors: int = entry.options.get(
-        CONF_MAX_SENSORS, entry.data.get(CONF_MAX_SENSORS, DEFAULT_MAX_SENSORS)
-    )
-    sensors = [EventCountdownSensor(entry, slot) for slot in range(max_sensors)]
+    events_raw = entry.options.get(CONF_EVENTS, entry.data.get(CONF_EVENTS, "[]"))
+    try:
+        events = json.loads(events_raw)
+    except (json.JSONDecodeError, ValueError):
+        events = []
+
+    sensors = [EventCountdownSensor(entry, ev) for ev in events if ev.get("name")]
     async_add_entities(sensors, update_before_add=True)
 
     async def _handle_interval(now=None):
@@ -37,126 +41,105 @@ async def async_setup_entry(
     )
 
 
-def _compute_events(events_json: str) -> list[dict]:
-    """Parse events JSON and return sorted list of upcoming events."""
-    try:
-        raw = json.loads(events_json)
-    except (json.JSONDecodeError, ValueError):
-        _LOGGER.error("Event Countdown: could not parse events JSON")
-        return []
-
+def _compute(event: dict) -> dict | None:
+    """Compute countdown data for a single event. Returns None if past and non-recurring."""
     today = date.today()
-    results: list[dict] = []
+    name = event.get("name", "")
+    day = event.get("day")
+    month = event.get("month")
+    year = event.get("year")
+    event_type = (event.get("type") or "fødselsdag").lower()
+    recurring = event.get("recurring")
+    if recurring is None:
+        recurring = event_type != "begivenhed"
 
-    for event in raw:
-        try:
-            if event.get("disabled"):
-                continue
+    if not day or not month:
+        return None
 
-            name = event.get("name")
-            day = event.get("day")
-            month = event.get("month")
-            origin_year = event.get("year")  # birth year / founding year
+    try:
+        target = date(today.year, month, day)
+    except ValueError:
+        return None
 
-            if not name or not day or not month:
-                _LOGGER.warning("Event Countdown: skipping event with missing fields: %s", event)
-                continue
+    if target < today:
+        if not recurring:
+            return None
+        target = date(today.year + 1, month, day)
 
-            event_type = (event.get("type") or "fødselsdag").lower()
-            this_year = today.year
+    days_remaining = (target - today).days
+    age = (target.year - year) if isinstance(year, int) else None
+    soon_threshold = event.get("soon", 30) if isinstance(event.get("soon"), int) else 30
+    is_soon = days_remaining <= soon_threshold
 
-            try:
-                target = date(this_year, month, day)
-            except ValueError:
-                _LOGGER.error("Event Countdown: invalid date for '%s'", name)
-                continue
+    # Day text
+    if days_remaining == 0:
+        dagstekst = "i dag"
+    elif days_remaining == 1:
+        dagstekst = "i morgen"
+    else:
+        dagstekst = f"om {days_remaining} dage"
 
-            recurring = event.get("recurring")
-            if recurring is None:
-                recurring = event_type != "begivenhed"
+    # Full name
+    if event_type == "fødselsdag":
+        base = re.sub(r"fødselsdag", "", name, flags=re.IGNORECASE).strip()
+        full_name = (
+            f"{base} {age} års fødselsdag {dagstekst}"
+            if age is not None
+            else f"{base} fødselsdag {dagstekst}"
+        )
+    elif event_type == "bryllup":
+        full_name = (
+            f"{age} års {name.lower()} {dagstekst}"
+            if age is not None
+            else f"{name} {dagstekst}"
+        )
+    else:
+        full_name = f"{name} {dagstekst}"
 
-            if target < today:
-                if not recurring:
-                    continue
-                target = date(this_year + 1, month, day)
+    event_date = (
+        f"{year}-{month:02d}-{day:02d}"
+        if isinstance(year, int)
+        else f"{today.year}-{month:02d}-{day:02d}"
+    )
 
-            days_remaining = (target - today).days
-            age = (target.year - origin_year) if isinstance(origin_year, int) else None
-            soon_threshold = event.get("soon", 60) if isinstance(event.get("soon"), int) else 60
-            is_soon = days_remaining <= soon_threshold
+    file_name = re.sub(r"[^a-zA-Z0-9æøåÆØÅ ]", "", name).replace(" ", "_")
+    picture = event.get("picture") or f"/local/pic/{file_name}.jpg"
 
-            file_name = re.sub(r"[^a-zA-Z0-9æøåÆØÅ ]", "", name).replace(" ", "_")
-            picture = event.get("picture") or f"/local/pic/{file_name}.jpg"
-
-            if days_remaining == 0:
-                dagstekst = "i dag"
-            elif days_remaining == 1:
-                dagstekst = "i morgen"
-            else:
-                dagstekst = f"om {days_remaining} dage"
-
-            if event_type == "fødselsdag":
-                base = re.sub(r"fødselsdag", "", name, flags=re.IGNORECASE).strip()
-                full_name = (
-                    f"{base} {age} års fødselsdag {dagstekst}"
-                    if age is not None
-                    else f"{base} fødselsdag {dagstekst}"
-                )
-            elif event_type == "bryllup":
-                full_name = (
-                    f"{age} års {name.lower()} {dagstekst}"
-                    if age is not None
-                    else f"{name} {dagstekst}"
-                )
-            else:
-                full_name = f"{name} {dagstekst}"
-
-            event_date = (
-                f"{origin_year}-{month:02d}-{day:02d}"
-                if isinstance(origin_year, int)
-                else f"{this_year}-{month:02d}-{day:02d}"
-            )
-
-            results.append(
-                {
-                    "full_name": full_name,
-                    "name": name,
-                    "type": event_type,
-                    "age": age,
-                    "days_remaining": days_remaining,
-                    "soon": is_soon,
-                    "soon_threshold": soon_threshold,
-                    "picture": picture,
-                    "event_date": event_date,
-                }
-            )
-
-        except Exception:
-            _LOGGER.exception("Event Countdown: unexpected error processing event '%s'", event.get("name"))
-
-    results.sort(key=lambda x: (not x["soon"], x["days_remaining"]))
-    return results
+    return {
+        "full_name": full_name,
+        "name": name,
+        "type": event_type,
+        "age": age,
+        "days_remaining": days_remaining,
+        "soon": is_soon,
+        "soon_threshold": soon_threshold,
+        "picture": picture,
+        "event_date": event_date,
+    }
 
 
 class EventCountdownSensor(SensorEntity):
-    _attr_has_entity_name = True
-    _attr_native_unit_of_measurement = "dage"
     _attr_icon = "mdi:calendar-clock"
+    _attr_native_unit_of_measurement = "dage"
 
-    def __init__(self, entry: ConfigEntry, slot: int) -> None:
+    def __init__(self, entry: ConfigEntry, event: dict) -> None:
         self._entry = entry
-        self._slot = slot
-        self._attr_unique_id = f"{entry.entry_id}_slot_{slot}"
-        self._attr_name = f"Event {slot + 1}"
+        self._event = event
+        name = event["name"]
+        slug = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+        self._attr_unique_id = f"{entry.entry_id}_{slug}"
+        self._attr_name = name
         self._data: dict | None = None
 
     @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": "Event Countdown",
-            "manufacturer": "CagosDk",
-        }
+    def device_info(self) -> DeviceInfo:
+        name = self._event["name"]
+        return DeviceInfo(
+            identifiers={(DOMAIN, f"{self._entry.entry_id}_{name}")},
+            name=name,
+            manufacturer="Event Countdown",
+            entry_type=DeviceEntryType.SERVICE,
+        )
 
     @property
     def native_value(self):
@@ -169,24 +152,24 @@ class EventCountdownSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         if not self._data:
-            return {"full_name": "Ingen begivenhed"}
+            return {}
         return {
-            "name": self._data["name"],
             "full_name": self._data["full_name"],
             "type": self._data["type"],
             "age": self._data["age"],
             "days_remaining": self._data["days_remaining"],
             "soon": self._data["soon"],
             "soon_threshold": self._data["soon_threshold"],
-            "unit": "dage",
             "entity_picture": self._data["picture"],
             "event_date": self._data["event_date"],
         }
 
+    @property
+    def available(self) -> bool:
+        return self._data is not None
+
     def update(self) -> None:
-        events_json: str = self._entry.options.get(
-            CONF_EVENTS,
-            self._entry.data.get(CONF_EVENTS, "[]"),
-        )
-        events = _compute_events(events_json)
-        self._data = events[self._slot] if self._slot < len(events) else None
+        if self._event.get("disabled"):
+            self._data = None
+            return
+        self._data = _compute(self._event)

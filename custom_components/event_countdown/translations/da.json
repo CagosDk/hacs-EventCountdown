@@ -15,7 +15,6 @@
           "add_event": "Tilføj begivenhed",
           "edit_event": "Rediger begivenhed",
           "delete_event": "Slet begivenhed",
-          "settings": "Sensor-indstillinger",
           "save": "Gem og luk"
         }
       },
@@ -63,15 +62,6 @@
         "description": "Vælg den begivenhed der skal slettes permanent. Dette kan ikke fortrydes.",
         "data": {
           "event_index": "Vælg begivenhed at slette"
-        }
-      },
-      "settings": {
-        "title": "Sensor-indstillinger",
-        "data": {
-          "max_sensors": "Antal sensorer"
-        },
-        "data_description": {
-          "max_sensors": "Opretter sensor.event_countdown_event_1 til event_N. De N næste begivenheder vises, sorteret med den snareste først."
         }
       }
     }
