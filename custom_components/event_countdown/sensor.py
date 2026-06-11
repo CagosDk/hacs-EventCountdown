@@ -221,7 +221,6 @@ def _compute_all(events: list[dict], lang: dict[str, str]) -> list[dict]:
 class EventSlotSensor(SensorEntity):
     """One slot in the sorted list of upcoming events (event_0..N-1)."""
 
-    _attr_icon = "mdi:calendar-clock"
     _attr_should_poll = False
 
     def __init__(self, entry: ConfigEntry, slot: int, lang: dict[str, str]) -> None:
