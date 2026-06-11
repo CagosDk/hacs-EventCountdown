@@ -123,7 +123,7 @@ class EventCountdownConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not has_global:
             # First install creates the global configuration entry directly
             return self.async_create_entry(
-                title="Global Configuration",
+                title="⚙️ Global Configuration",
                 data={ENTRY_TYPE: ENTRY_TYPE_GLOBAL, CONF_NUM_SENSORS: DEFAULT_NUM_SENSORS},
             )
 

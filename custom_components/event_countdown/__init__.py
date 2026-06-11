@@ -77,6 +77,9 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry, data=new_data, options=new_options, version=5
         )
     else:
-        hass.config_entries.async_update_entry(entry, version=5)
+        title = entry.title
+        if title == "Global Configuration":
+            title = "⚙️ Global Configuration"
+        hass.config_entries.async_update_entry(entry, title=title, version=5)
 
     return True
