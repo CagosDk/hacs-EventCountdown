@@ -2,7 +2,7 @@
   "domain": "event_countdown",
   "name": "Event Countdown",
   "documentation": "https://github.com/CagosDk/hacs-EventCountdown",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "codeowners": ["@CagosDk"],
   "requirements": [],
   "iot_class": "calculated",

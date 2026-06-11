@@ -19,7 +19,11 @@ The integration is configured entirely through the UI, with two kinds of entries
 
 Created automatically the first time the integration is added. Use its **Configure** button to set:
 
-- **Number of sensors** – how many slot sensors to create (default: 4). They always show the next N upcoming events, sorted with the soonest first.
+- **Number of sensors** – how many slot sensors to create (default: 4). They always show the next N upcoming events, sorted with the soonest first. If you lower this number, the surplus sensors are removed automatically (instead of becoming "unavailable").
+- **Language** – language used for the sensor's `full_name` text:
+  - **Automatic** (default) – follows the language configured in Home Assistant (Settings → System → General)
+  - **English**
+  - **Dansk**
 
 ### Events
 
@@ -35,10 +39,32 @@ Add one entry per event via **Add Integration → Event Countdown**. Each event 
 | `soon` | Yes | Days before the event is marked as "soon" (default: 30) |
 | `picture` | No | Path to image, e.g. `/local/pic/name.jpg` |
 | `recurring` | Yes | On = repeats every year. Off = skipped once the date has passed (default depends on `type`) |
-| `delete_after_occurrence` | Yes | On = the event (and its configuration entry) is removed automatically the day after it occurs |
 | `disabled` | Yes | On = the event is ignored until re-enabled |
+| `delete_after_occurrence` | Yes | On = the event (and its configuration entry) is removed automatically the day after it occurs |
 
-### Event types
+### Event types and how they're displayed
+
+The `full_name` attribute is built differently depending on the event `type`. With **English** as the language:
+
+| Type | Example `name` | Example `full_name` |
+|------|-----------------|----------------------|
+| `birthday` | `Mom's birthday` | *"Mom's birthday in 14 days"* (no `year` set) |
+| `birthday` (with `year`) | `Mom's birthday` | *"Mom turns 46 in 14 days"* |
+| `anniversary` | `Wedding anniversary` | *"Wedding anniversary in 5 days"* (no `year` set) |
+| `anniversary` (with `year`) | `Wedding anniversary` | *"10 year wedding anniversary in 5 days"* |
+| `event` | `Summer holiday` | *"Summer holiday in 60 days"* |
+
+With **Dansk** as the language, the same events would show:
+
+| Type | Eksempel `name` | Eksempel `full_name` |
+|------|------------------|------------------------|
+| `birthday` | `Mors fødselsdag` | *"Mors fødselsdag om 14 dage"* (uden `year`) |
+| `birthday` (med `year`) | `Mors fødselsdag` | *"Mors 46 års fødselsdag om 14 dage"* |
+| `anniversary` | `bryllupsdag` | *"bryllupsdag om 5 dage"* (uden `year`) |
+| `anniversary` (med `year`) | `bryllupsdag` | *"10 års bryllupsdag om 5 dage"* |
+| `event` | `Sommerferie` | *"Sommerferie om 60 dage"* |
+
+For `birthday`, the word "birthday" / "fødselsdag" is stripped from `name` before building `full_name`, so it doesn't appear twice.
 
 - **`birthday`** – repeats every year by default, calculates age automatically
 - **`anniversary`** – repeats every year by default, calculates the number of years automatically
@@ -52,7 +78,7 @@ The Global Configuration entry creates N slot sensors (`sensor.event_countdown_e
 
 - **State** – number of days until the event
 - **Attributes:**
-  - `full_name` – human-readable text, e.g. *"Frederik turns 11 in 5 days"*
+  - `full_name` – human-readable text, e.g. *"Mors 46 års fødselsdag om 14 dage"*
   - `name` – event name
   - `type` – event type
   - `age` – calculated age / anniversary number
@@ -62,4 +88,16 @@ The Global Configuration entry creates N slot sensors (`sensor.event_countdown_e
   - `event_date` – original event date (YYYY-MM-DD)
   - `entity_picture` – path to image
 
-If there are fewer upcoming events than sensors, the remaining sensors show `full_name: "No event"`.
+If there are fewer upcoming events than sensors, the remaining sensors show `full_name: "No event"` (or `"Ingen begivenhed"` in Danish).
+
+## Showing `full_name` on a dashboard
+
+By default, a sensor card shows the entity's *state* (the number of days remaining) and its picture. To show the human-readable `full_name` text instead:
+
+1. Add the sensor to a dashboard (e.g. a **Tile** card or **Entities** card) and open its settings (pencil icon → **Edit** or the entity's "Visual settings" / *"Mærkatindstillinger"*).
+2. Under **Content**, enable **Show entity picture** if you want the event's image displayed.
+3. Under **State**, choose which attribute to display:
+   - For the **Tile** card: set *"Show information for"* / *"Tilstandsoplysninger"* to **Full name** instead of the default state.
+4. Repeat for `Tilstand` (state) / `Ikon` (icon) as desired — these can be toggled independently.
+
+This way the card displays text like *"Mors 46 års fødselsdag om 14 dage"* together with the event's picture, instead of just the raw number of days.

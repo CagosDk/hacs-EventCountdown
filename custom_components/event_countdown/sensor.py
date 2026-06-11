@@ -9,6 +9,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
@@ -48,6 +49,8 @@ async def async_setup_entry(
         language_code = hass.config.language
     lang = get_language(language_code)
 
+    _remove_stale_slot_entities(hass, entry, num_sensors)
+
     sensors = [EventSlotSensor(entry, slot, lang) for slot in range(num_sensors)]
     async_add_entities(sensors, update_before_add=True)
 
@@ -63,6 +66,23 @@ async def async_setup_entry(
     entry.async_on_unload(
         async_track_time_interval(hass, _refresh, _UPDATE_INTERVAL)
     )
+
+
+def _remove_stale_slot_entities(
+    hass: HomeAssistant, entry: ConfigEntry, num_sensors: int
+) -> None:
+    """Remove slot sensors left over from a previous, larger num_sensors setting."""
+    ent_reg = er.async_get(hass)
+    prefix = f"{entry.entry_id}_event"
+    for entity_entry in er.async_entries_for_config_entry(ent_reg, entry.entry_id):
+        if not entity_entry.unique_id.startswith(prefix):
+            continue
+        try:
+            slot = int(entity_entry.unique_id[len(prefix):])
+        except ValueError:
+            continue
+        if slot >= num_sensors:
+            ent_reg.async_remove(entity_entry.entity_id)
 
 
 def _collect_events(hass: HomeAssistant) -> list[dict]:
