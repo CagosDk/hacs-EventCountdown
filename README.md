@@ -90,7 +90,7 @@ The Global Configuration entry creates N slot sensors (`sensor.event_countdown_e
 
 If there are fewer upcoming events than sensors, the remaining sensors show state `false` and `full_name: "No event"` (or `"Ingen begivenhed"` in Danish).
 
-If no `picture` is configured for an event, `entity_picture` is left empty so the card falls back to the `mdi:calendar-clock` icon instead of showing a broken-image placeholder.
+If no `picture` is configured for an event, `entity_picture` is left empty and the entity has no icon set, so the card shows neither a broken-image placeholder nor a fallback icon.
 
 ## Showing `full_name` on a dashboard
 
