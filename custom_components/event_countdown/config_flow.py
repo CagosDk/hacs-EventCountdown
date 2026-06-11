@@ -91,11 +91,11 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
             ): selector.TextSelector(),
             vol.Required("recurring", default=bool(recurring)): selector.BooleanSelector(),
             vol.Required(
-                CONF_DELETE_AFTER_OCCURRENCE,
-                default=bool(ev.get(CONF_DELETE_AFTER_OCCURRENCE, False)),
+                "disabled", default=bool(ev.get("disabled", False))
             ): selector.BooleanSelector(),
             vol.Required(
-                "disabled", default=bool(ev.get("disabled", False))
+                CONF_DELETE_AFTER_OCCURRENCE,
+                default=bool(ev.get(CONF_DELETE_AFTER_OCCURRENCE, False)),
             ): selector.BooleanSelector(),
         }
     )
