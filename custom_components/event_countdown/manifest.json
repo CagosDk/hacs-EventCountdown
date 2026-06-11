@@ -2,10 +2,10 @@
   "domain": "event_countdown",
   "name": "Event Countdown",
   "documentation": "https://github.com/CagosDk/hacs-EventCountdown",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "codeowners": ["@CagosDk"],
   "requirements": [],
-  "iot_class": "local_push",
+  "iot_class": "calculated",
   "config_flow": true,
   "homeassistant": "2023.6.0"
 }
