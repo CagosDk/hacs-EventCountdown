@@ -76,23 +76,25 @@ The integration recomputes the upcoming events every hour, and whenever an event
 
 The Global Configuration entry creates N slot sensors (`sensor.event_countdown_event_0` … `event_(N-1)`), each showing the next upcoming events sorted with the soonest (and "soon") events first:
 
-- **State** – number of days until the event
+- **State** – `true` if this slot's event is within its `soon` threshold (i.e. it should be displayed), otherwise `false`. Use this to control card visibility (see below).
 - **Attributes:**
   - `full_name` – human-readable text, e.g. *"Mors 46 års fødselsdag om 14 dage"*
   - `name` – event name
   - `type` – event type
   - `age` – calculated age / anniversary number
   - `days_remaining` – days remaining
-  - `soon` – `true` if within the threshold
+  - `soon` – `true` if within the threshold (same value as the state)
   - `soon_threshold` – threshold in days
   - `event_date` – original event date (YYYY-MM-DD)
-  - `entity_picture` – path to image
+  - `entity_picture` – path to image, only set if a `picture` was configured for the event
 
-If there are fewer upcoming events than sensors, the remaining sensors show `full_name: "No event"` (or `"Ingen begivenhed"` in Danish).
+If there are fewer upcoming events than sensors, the remaining sensors show state `false` and `full_name: "No event"` (or `"Ingen begivenhed"` in Danish).
+
+If no `picture` is configured for an event, `entity_picture` is left empty so the card falls back to the `mdi:calendar-clock` icon instead of showing a broken-image placeholder.
 
 ## Showing `full_name` on a dashboard
 
-By default, a sensor card shows the entity's *state* (the number of days remaining) and its picture. To show the human-readable `full_name` text instead:
+By default, a sensor card shows the entity's *state* (`true`/`false`) and its picture/icon. To show the human-readable `full_name` text instead:
 
 1. Add the sensor to a dashboard (e.g. a **Tile** card or **Entities** card) and open its settings (pencil icon → **Edit** or the entity's "Visual settings" / *"Mærkatindstillinger"*).
 2. Under **Content**, enable **Show entity picture** if you want the event's image displayed.
@@ -100,4 +102,14 @@ By default, a sensor card shows the entity's *state* (the number of days remaini
    - For the **Tile** card: set *"Show information for"* / *"Tilstandsoplysninger"* to **Full name** instead of the default state.
 4. Repeat for `Tilstand` (state) / `Ikon` (icon) as desired — these can be toggled independently.
 
-This way the card displays text like *"Mors 46 års fødselsdag om 14 dage"* together with the event's picture, instead of just the raw number of days.
+This way the card displays text like *"Mors 46 års fødselsdag om 14 dage"* together with the event's picture, instead of the raw `true`/`false` state.
+
+## Hiding cards for events that aren't "soon"
+
+Because the sensor's state is `true`/`false`, you can add a **visibility condition** to a card so it's only shown when the event is within its `soon` threshold:
+
+1. Edit the card → **Visibility** (*"Synlighed"*) → **Add condition** (*"Tilføj betingelse"*).
+2. Choose **Entity state** (*"Entitetstilstand"*), select the `sensor.event_countdown_event_N` entity, leave **Attribute** empty, and set **State equals** (*"Tilstand er lig med"*) to `true`.
+
+The card is then hidden automatically whenever that slot has no "soon" event.
+

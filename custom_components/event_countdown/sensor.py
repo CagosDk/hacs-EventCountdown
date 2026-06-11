@@ -190,8 +190,7 @@ def _compute_all(events: list[dict], lang: dict[str, str]) -> list[dict]:
             else:
                 full_name = lang["event"].format(name=name, day_text=day_text)
 
-            file_name = re.sub(r"[^a-zA-Z0-9æøåÆØÅ ]", "", name).replace(" ", "_")
-            picture = event.get("picture") or f"/local/pic/{file_name}.jpg"
+            picture = event.get("picture")
             event_date = (
                 f"{year}-{month:02d}-{day:02d}"
                 if isinstance(year, int)
@@ -231,7 +230,6 @@ class EventSlotSensor(SensorEntity):
         self._lang = lang
         self._attr_unique_id = f"{entry.entry_id}_event{slot}"
         self._attr_name = lang["slot_name"].format(slot=slot)
-        self._attr_native_unit_of_measurement = lang["unit_days"]
         self._data: dict | None = None
 
     @property
@@ -244,8 +242,9 @@ class EventSlotSensor(SensorEntity):
         )
 
     @property
-    def native_value(self):
-        return self._data["days_remaining"] if self._data else None
+    def native_value(self) -> str:
+        """Whether this slot holds an event that should be displayed ("soon")."""
+        return "true" if self._data and self._data["soon"] else "false"
 
     @property
     def entity_picture(self) -> str | None:
