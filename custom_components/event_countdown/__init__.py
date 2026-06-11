@@ -4,7 +4,15 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import DOMAIN, ENTRY_TYPE, ENTRY_TYPE_GLOBAL, SIGNAL_EVENTS_CHANGED
+from .const import (
+    CONF_DELETE_AFTER_OCCURRENCE,
+    DOMAIN,
+    ENTRY_TYPE,
+    ENTRY_TYPE_EVENT,
+    ENTRY_TYPE_GLOBAL,
+    LEGACY_TYPE_MAP,
+    SIGNAL_EVENTS_CHANGED,
+)
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ["sensor"]
@@ -43,3 +51,35 @@ async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> Non
     else:
         # Event edited — just recompute
         async_dispatcher_send(hass, SIGNAL_EVENTS_CHANGED)
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate old config entries to the current version."""
+    if entry.version >= 5:
+        return True
+
+    if entry.data.get(ENTRY_TYPE) == ENTRY_TYPE_EVENT:
+        new_data = {**entry.data}
+        event = {**new_data.get("event", {})}
+        event["type"] = LEGACY_TYPE_MAP.get(event.get("type"), event.get("type"))
+        event.setdefault(CONF_DELETE_AFTER_OCCURRENCE, False)
+        new_data["event"] = event
+
+        new_options = {**entry.options}
+        if "type" in new_options:
+            new_options["type"] = LEGACY_TYPE_MAP.get(
+                new_options["type"], new_options["type"]
+            )
+        if new_options:
+            new_options.setdefault(CONF_DELETE_AFTER_OCCURRENCE, False)
+
+        hass.config_entries.async_update_entry(
+            entry, data=new_data, options=new_options, version=5
+        )
+    else:
+        title = entry.title
+        if title == "Global Configuration":
+            title = "⚙️ Global Configuration"
+        hass.config_entries.async_update_entry(entry, title=title, version=5)
+
+    return True

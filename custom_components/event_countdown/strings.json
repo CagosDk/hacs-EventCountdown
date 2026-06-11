@@ -12,6 +12,7 @@
           "soon": "\"Soon\" threshold (days)",
           "picture": "Picture path",
           "recurring": "Repeats every year",
+          "delete_after_occurrence": "Delete after the event has passed",
           "disabled": "Disabled"
         },
         "data_description": {
@@ -19,6 +20,7 @@
           "soon": "The event is marked as upcoming when this many days remain.",
           "picture": "Optional. Local image path, e.g. /local/pic/name.jpg",
           "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
+          "delete_after_occurrence": "On = this event (and its configuration) is removed automatically the day after it occurs.",
           "disabled": "On = this event is ignored until re-enabled."
         }
       }
@@ -46,6 +48,7 @@
           "soon": "\"Soon\" threshold (days)",
           "picture": "Picture path",
           "recurring": "Repeats every year",
+          "delete_after_occurrence": "Delete after the event has passed",
           "disabled": "Disabled"
         },
         "data_description": {
@@ -53,6 +56,7 @@
           "soon": "The event is marked as upcoming when this many days remain.",
           "picture": "Optional. Local image path, e.g. /local/pic/name.jpg",
           "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
+          "delete_after_occurrence": "On = this event (and its configuration) is removed automatically the day after it occurs.",
           "disabled": "On = this event is ignored until re-enabled."
         }
       }
