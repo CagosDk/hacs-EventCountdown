@@ -112,10 +112,9 @@ def _form_to_event(user_input: dict) -> dict:
         CONF_DELETE_AFTER_OCCURRENCE: bool(user_input.get(CONF_DELETE_AFTER_OCCURRENCE, False)),
         "disabled": bool(user_input.get("disabled", False)),
     }
-    if user_input.get("year") is not None:
-        event["year"] = int(user_input["year"])
-    if user_input.get("picture"):
-        event["picture"] = user_input["picture"].strip()
+    event["year"] = int(user_input["year"]) if user_input.get("year") is not None else None
+    picture = user_input.get("picture")
+    event["picture"] = picture.strip() if picture else None
     return event
 
 
