@@ -5,6 +5,8 @@
 
 A Home Assistant integration that creates sensors for upcoming events – birthdays, anniversaries, and one-time events.
 
+![Example dashboard with upcoming events](images/dashboard-example.png)
+
 ## Installation via HACS
 
 1. Add this repository as a **Custom Repository** in HACS (category: Integration)
