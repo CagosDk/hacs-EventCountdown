@@ -1,10 +1,6 @@
 {
   "config": {
     "step": {
-      "user": {
-        "title": "Event Countdown",
-        "description": "Click Submit to create the global configuration. Use **Add Entry** on the integration to add events."
-      },
       "event": {
         "title": "Add event",
         "data": {
@@ -19,18 +15,27 @@
           "disabled": "Disabled"
         },
         "data_description": {
-          "year": "Birth year / founding year — used to calculate age. Leave empty if unknown.",
-          "soon": "Highlighted as upcoming when this many days remain.",
+          "year": "Birth year / wedding year — used to calculate age. Leave empty if not relevant.",
+          "soon": "The event is marked as upcoming when this many days remain.",
           "picture": "Optional. Local image path, e.g. /local/pic/name.jpg",
-          "recurring": "On = repeats every year. Off = skipped once the date has passed.",
-          "disabled": "On = ignored until re-enabled."
+          "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
+          "disabled": "On = this event is ignored until re-enabled."
         }
       }
     }
   },
   "options": {
     "step": {
-      "init": {
+      "global": {
+        "title": "Global configuration",
+        "data": {
+          "num_sensors": "Number of sensors"
+        },
+        "data_description": {
+          "num_sensors": "How many slot sensors to create. They always show the next N upcoming events, sorted with the soonest first."
+        }
+      },
+      "event": {
         "title": "Edit event",
         "data": {
           "name": "Name",
@@ -44,11 +49,11 @@
           "disabled": "Disabled"
         },
         "data_description": {
-          "year": "Birth year / founding year — used to calculate age. Leave empty if unknown.",
-          "soon": "Highlighted as upcoming when this many days remain.",
+          "year": "Birth year / wedding year — used to calculate age. Leave empty if not relevant.",
+          "soon": "The event is marked as upcoming when this many days remain.",
           "picture": "Optional. Local image path, e.g. /local/pic/name.jpg",
-          "recurring": "On = repeats every year. Off = skipped once the date has passed.",
-          "disabled": "On = ignored until re-enabled."
+          "recurring": "On = repeats every year (birthdays, anniversaries). Off = skipped once the date has passed.",
+          "disabled": "On = this event is ignored until re-enabled."
         }
       }
     }

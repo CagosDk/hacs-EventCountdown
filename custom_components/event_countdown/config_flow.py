@@ -3,12 +3,34 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from .const import DOMAIN, ENTRY_TYPE_EVENT, ENTRY_TYPE_GLOBAL
+from .const import (
+    CONF_NUM_SENSORS,
+    DEFAULT_NUM_SENSORS,
+    DOMAIN,
+    ENTRY_TYPE,
+    ENTRY_TYPE_EVENT,
+    ENTRY_TYPE_GLOBAL,
+)
 
 _TYPE_OPTIONS = [
-    {"value": "fødselsdag", "label": "Birthday 🎂"},
-    {"value": "bryllup", "label": "Anniversary 💍"},
-    {"value": "begivenhed", "label": "Event 📅"},
+    {"value": "fødselsdag", "label": "Fødselsdag 🎂"},
+    {"value": "bryllup", "label": "Bryllupsdag 💍"},
+    {"value": "begivenhed", "label": "Begivenhed 📅"},
+]
+
+_MONTH_OPTIONS = [
+    {"value": "1", "label": "Januar"},
+    {"value": "2", "label": "Februar"},
+    {"value": "3", "label": "Marts"},
+    {"value": "4", "label": "April"},
+    {"value": "5", "label": "Maj"},
+    {"value": "6", "label": "Juni"},
+    {"value": "7", "label": "Juli"},
+    {"value": "8", "label": "August"},
+    {"value": "9", "label": "September"},
+    {"value": "10", "label": "Oktober"},
+    {"value": "11", "label": "November"},
+    {"value": "12", "label": "December"},
 ]
 
 
@@ -20,40 +42,41 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
 
     return vol.Schema(
         {
-            vol.Required("name", default=ev.get("name", "")): selector.TextSelector(
-                selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
-            ),
+            vol.Required("name", default=ev.get("name", "")): selector.TextSelector(),
             vol.Required("day", default=int(ev.get("day", 1))): selector.NumberSelector(
-                selector.NumberSelectorConfig(min=1, max=31, mode=selector.NumberSelectorMode.BOX)
+                selector.NumberSelectorConfig(
+                    min=1, max=31, step=1, mode=selector.NumberSelectorMode.BOX
+                )
             ),
-            vol.Required("month", default=int(ev.get("month", 1))): selector.NumberSelector(
-                selector.NumberSelectorConfig(min=1, max=12, mode=selector.NumberSelectorMode.BOX)
+            vol.Required("month", default=str(ev.get("month", 1))): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=_MONTH_OPTIONS,
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
             ),
             vol.Optional(
                 "year",
                 description={"suggested_value": ev.get("year")},
             ): selector.NumberSelector(
                 selector.NumberSelectorConfig(
-                    min=1900, max=2100, mode=selector.NumberSelectorMode.BOX
+                    min=1900, max=2100, step=1, mode=selector.NumberSelectorMode.BOX
                 )
             ),
             vol.Required("type", default=ev.get("type", "fødselsdag")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=_TYPE_OPTIONS,
-                    mode=selector.SelectSelectorMode.LIST,
+                    mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Required("soon", default=int(ev.get("soon", 30))): selector.NumberSelector(
                 selector.NumberSelectorConfig(
-                    min=1, max=180, step=1, mode=selector.NumberSelectorMode.SLIDER
+                    min=1, max=365, step=1, mode=selector.NumberSelectorMode.BOX
                 )
             ),
             vol.Optional(
                 "picture",
                 description={"suggested_value": ev.get("picture", "")},
-            ): selector.TextSelector(
-                selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
-            ),
+            ): selector.TextSelector(),
             vol.Required("recurring", default=bool(recurring)): selector.BooleanSelector(),
             vol.Required(
                 "disabled", default=bool(ev.get("disabled", False))
@@ -64,95 +87,107 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
 
 def _form_to_event(user_input: dict) -> dict:
     event: dict = {
-        "name": user_input["name"],
+        "name": user_input["name"].strip(),
         "day": int(user_input["day"]),
         "month": int(user_input["month"]),
         "type": user_input["type"],
         "soon": int(user_input["soon"]),
-        "recurring": user_input["recurring"],
+        "recurring": bool(user_input["recurring"]),
+        "disabled": bool(user_input.get("disabled", False)),
     }
     if user_input.get("year") is not None:
         event["year"] = int(user_input["year"])
     if user_input.get("picture"):
-        event["picture"] = user_input["picture"]
-    if user_input.get("disabled"):
-        event["disabled"] = True
+        event["picture"] = user_input["picture"].strip()
     return event
 
 
-# ── Config flow (initial install + adding events) ─────────────────────────────
-
 class EventCountdownConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 3
+    VERSION = 4
 
     async def async_step_user(self, user_input=None):
-        # Check whether the global config entry already exists
         existing = self.hass.config_entries.async_entries(DOMAIN)
-        has_global = any(e.data.get("entry_type") == ENTRY_TYPE_GLOBAL for e in existing)
+        has_global = any(
+            e.data.get(ENTRY_TYPE) == ENTRY_TYPE_GLOBAL for e in existing
+        )
 
         if not has_global:
-            # First install: silently create the global entry
+            # First install creates the global configuration entry directly
             return self.async_create_entry(
                 title="Global Configuration",
-                data={"entry_type": ENTRY_TYPE_GLOBAL},
+                data={ENTRY_TYPE: ENTRY_TYPE_GLOBAL, CONF_NUM_SENSORS: DEFAULT_NUM_SENSORS},
             )
 
-        # Subsequent "Add": go straight to the event form
-        return await self.async_step_event()
+        # Integration already installed → adding an event
+        return await self.async_step_event(user_input)
 
     async def async_step_event(self, user_input=None):
         if user_input is not None:
             event = _form_to_event(user_input)
             return self.async_create_entry(
                 title=event["name"],
-                data={"entry_type": ENTRY_TYPE_EVENT, "event": event},
+                data={ENTRY_TYPE: ENTRY_TYPE_EVENT, "event": event},
             )
         return self.async_show_form(step_id="event", data_schema=_event_schema())
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        if config_entry.data.get("entry_type") == ENTRY_TYPE_GLOBAL:
+        if config_entry.data.get(ENTRY_TYPE) == ENTRY_TYPE_GLOBAL:
             return GlobalOptionsFlow(config_entry)
         return EventOptionsFlow(config_entry)
 
 
-# ── Global options flow ───────────────────────────────────────────────────────
-
 class GlobalOptionsFlow(config_entries.OptionsFlow):
-    """Global settings — placeholder for future global options."""
-
     def __init__(self, config_entry) -> None:
         self._config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
+        return await self.async_step_global(user_input)
+
+    async def async_step_global(self, user_input=None):
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
-        return self.async_show_form(step_id="init", data_schema=vol.Schema({}))
+            return self.async_create_entry(
+                title="", data={CONF_NUM_SENSORS: int(user_input[CONF_NUM_SENSORS])}
+            )
 
+        current = self._config_entry.options.get(
+            CONF_NUM_SENSORS,
+            self._config_entry.data.get(CONF_NUM_SENSORS, DEFAULT_NUM_SENSORS),
+        )
+        return self.async_show_form(
+            step_id="global",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_NUM_SENSORS, default=current): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=1, max=20, step=1, mode=selector.NumberSelectorMode.BOX
+                        )
+                    ),
+                }
+            ),
+        )
 
-# ── Per-event options flow ────────────────────────────────────────────────────
 
 class EventOptionsFlow(config_entries.OptionsFlow):
-    """Edit a single event's settings."""
-
     def __init__(self, config_entry) -> None:
         self._config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
-        # Merge saved options on top of original data
-        saved = {
-            **self._config_entry.data.get("event", {}),
-            **self._config_entry.options,
-        }
+        return await self.async_step_event(user_input)
+
+    async def async_step_event(self, user_input=None):
         if user_input is not None:
             event = _form_to_event(user_input)
-            # Update the entry title to reflect possible name change
             self.hass.config_entries.async_update_entry(
                 self._config_entry, title=event["name"]
             )
             return self.async_create_entry(title="", data=event)
+
+        current = {
+            **self._config_entry.data.get("event", {}),
+            **self._config_entry.options,
+        }
         return self.async_show_form(
-            step_id="init",
-            data_schema=_event_schema(saved),
+            step_id="event", data_schema=_event_schema(current)
         )

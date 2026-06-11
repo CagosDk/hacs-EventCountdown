@@ -1,10 +1,6 @@
 {
   "config": {
     "step": {
-      "user": {
-        "title": "Event Countdown",
-        "description": "Klik Submit for at oprette den globale konfiguration. Brug **Tilføj emne** på integrationen for at tilføje begivenheder."
-      },
       "event": {
         "title": "Tilføj begivenhed",
         "data": {
@@ -19,18 +15,27 @@
           "disabled": "Deaktiveret"
         },
         "data_description": {
-          "year": "Fødselsår / stiftelsesår — bruges til aldersberegning. Efterlad tom hvis ukendt.",
-          "soon": "Fremhæves som kommende når dette antal dage er tilbage.",
+          "year": "Fødselsår / bryllupsår — bruges til aldersberegning. Efterlad tom hvis ikke relevant.",
+          "soon": "Begivenheden markeres som kommende når dette antal dage er tilbage.",
           "picture": "Valgfri. Lokal billedsti, f.eks. /local/pic/navn.jpg",
-          "recurring": "Til = gentages hvert år. Fra = springes over når datoen er passeret.",
-          "disabled": "Til = ignoreres indtil genaktiveret."
+          "recurring": "Til = gentages hvert år (fødselsdage, bryllupsdag). Fra = springes over når datoen er passeret.",
+          "disabled": "Til = denne begivenhed ignoreres indtil den genaktiveres."
         }
       }
     }
   },
   "options": {
     "step": {
-      "init": {
+      "global": {
+        "title": "Global konfiguration",
+        "data": {
+          "num_sensors": "Antal sensorer"
+        },
+        "data_description": {
+          "num_sensors": "Antal slot-sensorer der oprettes. De viser altid de næste N kommende begivenheder, sorteret med den snareste først."
+        }
+      },
+      "event": {
         "title": "Rediger begivenhed",
         "data": {
           "name": "Navn",
@@ -44,11 +49,11 @@
           "disabled": "Deaktiveret"
         },
         "data_description": {
-          "year": "Fødselsår / stiftelsesår — bruges til aldersberegning. Efterlad tom hvis ukendt.",
-          "soon": "Fremhæves som kommende når dette antal dage er tilbage.",
+          "year": "Fødselsår / bryllupsår — bruges til aldersberegning. Efterlad tom hvis ikke relevant.",
+          "soon": "Begivenheden markeres som kommende når dette antal dage er tilbage.",
           "picture": "Valgfri. Lokal billedsti, f.eks. /local/pic/navn.jpg",
-          "recurring": "Til = gentages hvert år. Fra = springes over når datoen er passeret.",
-          "disabled": "Til = ignoreres indtil genaktiveret."
+          "recurring": "Til = gentages hvert år (fødselsdage, bryllupsdag). Fra = springes over når datoen er passeret.",
+          "disabled": "Til = denne begivenhed ignoreres indtil den genaktiveres."
         }
       }
     }
