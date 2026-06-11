@@ -1,6 +1,7 @@
 # Event Countdown
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Home Assistant integration that creates sensors for upcoming events – birthdays, anniversaries, and one-time events.
 
