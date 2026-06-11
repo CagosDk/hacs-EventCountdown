@@ -5,7 +5,9 @@ from homeassistant.helpers import selector
 
 from .const import (
     CONF_DELETE_AFTER_OCCURRENCE,
+    CONF_LANGUAGE,
     CONF_NUM_SENSORS,
+    DEFAULT_LANGUAGE,
     DEFAULT_NUM_SENSORS,
     DOMAIN,
     ENTRY_TYPE,
@@ -15,6 +17,12 @@ from .const import (
     EVENT_TYPE_BIRTHDAY,
     EVENT_TYPE_EVENT,
 )
+
+_LANGUAGE_SELECT_OPTIONS = [
+    {"value": "auto", "label": "Automatic (use Home Assistant's language)"},
+    {"value": "en", "label": "English"},
+    {"value": "da", "label": "Dansk"},
+]
 
 _TYPE_OPTIONS = [
     {"value": EVENT_TYPE_BIRTHDAY, "label": "Birthday 🎂"},
@@ -157,20 +165,38 @@ class GlobalOptionsFlow(config_entries.OptionsFlow):
     async def async_step_global(self, user_input=None):
         if user_input is not None:
             return self.async_create_entry(
-                title="", data={CONF_NUM_SENSORS: int(user_input[CONF_NUM_SENSORS])}
+                title="",
+                data={
+                    CONF_NUM_SENSORS: int(user_input[CONF_NUM_SENSORS]),
+                    CONF_LANGUAGE: user_input[CONF_LANGUAGE],
+                },
             )
 
-        current = self._config_entry.options.get(
+        current_num_sensors = self._config_entry.options.get(
             CONF_NUM_SENSORS,
             self._config_entry.data.get(CONF_NUM_SENSORS, DEFAULT_NUM_SENSORS),
+        )
+        current_language = self._config_entry.options.get(
+            CONF_LANGUAGE,
+            self._config_entry.data.get(CONF_LANGUAGE, DEFAULT_LANGUAGE),
         )
         return self.async_show_form(
             step_id="global",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_NUM_SENSORS, default=current): selector.NumberSelector(
+                    vol.Required(
+                        CONF_NUM_SENSORS, default=current_num_sensors
+                    ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
                             min=1, max=20, step=1, mode=selector.NumberSelectorMode.BOX
+                        )
+                    ),
+                    vol.Required(
+                        CONF_LANGUAGE, default=current_language
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=_LANGUAGE_SELECT_OPTIONS,
+                            mode=selector.SelectSelectorMode.DROPDOWN,
                         )
                     ),
                 }

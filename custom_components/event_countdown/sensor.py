@@ -15,7 +15,9 @@ from homeassistant.helpers.event import async_track_time_interval
 
 from .const import (
     CONF_DELETE_AFTER_OCCURRENCE,
+    CONF_LANGUAGE,
     CONF_NUM_SENSORS,
+    DEFAULT_LANGUAGE,
     DEFAULT_NUM_SENSORS,
     DOMAIN,
     ENTRY_TYPE,
@@ -25,6 +27,7 @@ from .const import (
     EVENT_TYPE_EVENT,
     SIGNAL_EVENTS_CHANGED,
 )
+from .lang import get_language
 
 _LOGGER = logging.getLogger(__name__)
 _UPDATE_INTERVAL = timedelta(hours=1)
@@ -38,7 +41,14 @@ async def async_setup_entry(
     num_sensors = entry.options.get(
         CONF_NUM_SENSORS, entry.data.get(CONF_NUM_SENSORS, DEFAULT_NUM_SENSORS)
     )
-    sensors = [EventSlotSensor(entry, slot) for slot in range(num_sensors)]
+    language_code = entry.options.get(
+        CONF_LANGUAGE, entry.data.get(CONF_LANGUAGE, DEFAULT_LANGUAGE)
+    )
+    if language_code == "auto":
+        language_code = hass.config.language
+    lang = get_language(language_code)
+
+    sensors = [EventSlotSensor(entry, slot, lang) for slot in range(num_sensors)]
     async_add_entities(sensors, update_before_add=True)
 
     @callback
@@ -95,7 +105,7 @@ async def _remove_expired_events(hass: HomeAssistant) -> None:
             await hass.config_entries.async_remove(entry.entry_id)
 
 
-def _compute_all(events: list[dict]) -> list[dict]:
+def _compute_all(events: list[dict], lang: dict[str, str]) -> list[dict]:
     """Port of the Node-RED function node: compute, filter and sort events."""
     today = date.today()
     results: list[dict] = []
@@ -134,27 +144,31 @@ def _compute_all(events: list[dict]) -> list[dict]:
             is_soon = days_remaining <= soon_threshold
 
             if days_remaining == 0:
-                day_text = "today"
+                day_text = lang["today"]
             elif days_remaining == 1:
-                day_text = "tomorrow"
+                day_text = lang["tomorrow"]
             else:
-                day_text = f"in {days_remaining} days"
+                day_text = lang["in_days"].format(days=days_remaining)
 
             if event_type == EVENT_TYPE_BIRTHDAY:
-                base = re.sub(r"birthday", "", name, flags=re.IGNORECASE).strip()
+                base = re.sub(
+                    lang["strip_word"], "", name, flags=re.IGNORECASE
+                ).strip()
                 full_name = (
-                    f"{base} turns {age} {day_text}"
+                    lang["birthday_with_age"].format(base=base, age=age, day_text=day_text)
                     if age is not None
-                    else f"{base}'s birthday {day_text}"
+                    else lang["birthday_no_age"].format(base=base, day_text=day_text)
                 )
             elif event_type == EVENT_TYPE_ANNIVERSARY:
                 full_name = (
-                    f"{age} year {name.lower()} {day_text}"
+                    lang["anniversary_with_age"].format(
+                        age=age, name=name.lower(), day_text=day_text
+                    )
                     if age is not None
-                    else f"{name} {day_text}"
+                    else lang["anniversary_no_age"].format(name=name, day_text=day_text)
                 )
             else:
-                full_name = f"{name} {day_text}"
+                full_name = lang["event"].format(name=name, day_text=day_text)
 
             file_name = re.sub(r"[^a-zA-Z0-9æøåÆØÅ ]", "", name).replace(" ", "_")
             picture = event.get("picture") or f"/local/pic/{file_name}.jpg"
@@ -189,14 +203,15 @@ class EventSlotSensor(SensorEntity):
     """One slot in the sorted list of upcoming events (event_0..N-1)."""
 
     _attr_icon = "mdi:calendar-clock"
-    _attr_native_unit_of_measurement = "days"
     _attr_should_poll = False
 
-    def __init__(self, entry: ConfigEntry, slot: int) -> None:
+    def __init__(self, entry: ConfigEntry, slot: int, lang: dict[str, str]) -> None:
         self._entry = entry
         self._slot = slot
+        self._lang = lang
         self._attr_unique_id = f"{entry.entry_id}_event{slot}"
-        self._attr_name = f"Event {slot}"
+        self._attr_name = lang["slot_name"].format(slot=slot)
+        self._attr_native_unit_of_measurement = lang["unit_days"]
         self._data: dict | None = None
 
     @property
@@ -220,7 +235,7 @@ class EventSlotSensor(SensorEntity):
     def extra_state_attributes(self):
         if not self._data:
             # Mirror the Node-RED fallback message
-            return {"full_name": "No event", "soon": False}
+            return {"full_name": self._lang["no_event"], "soon": False}
         return {
             "name": self._data["name"],
             "full_name": self._data["full_name"],
@@ -234,5 +249,5 @@ class EventSlotSensor(SensorEntity):
         }
 
     def update(self) -> None:
-        computed = _compute_all(_collect_events(self.hass))
+        computed = _compute_all(_collect_events(self.hass), self._lang)
         self._data = computed[self._slot] if self._slot < len(computed) else None
