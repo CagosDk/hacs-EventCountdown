@@ -13,71 +13,46 @@ A Home Assistant integration that creates sensors for upcoming events – birthd
 
 ## Configuration
 
-During setup (and later via **Configure**) you specify:
+The integration is configured entirely through the UI, with two kinds of entries:
 
-- **Number of sensors** – how many sensors to create (default: 4)
-- **Events (JSON)** – a JSON list of your events
+### Global Configuration
 
-The integration updates automatically every hour.
+Created automatically the first time the integration is added. Use its **Configure** button to set:
 
-## JSON format
+- **Number of sensors** – how many slot sensors to create (default: 4). They always show the next N upcoming events, sorted with the soonest first.
 
-```json
-[
-  {
-    "name": "Frederik's birthday",
-    "day": 24,
-    "month": 3,
-    "year": 2015,
-    "type": "fødselsdag",
-    "soon": 30,
-    "picture": "/local/pic/frederik.jpg"
-  },
-  {
-    "name": "Wedding anniversary",
-    "day": 24,
-    "month": 9,
-    "year": 2016,
-    "type": "bryllup",
-    "soon": 30
-  },
-  {
-    "name": "Summer holiday",
-    "day": 5,
-    "month": 7,
-    "year": 2026,
-    "type": "begivenhed",
-    "soon": 60
-  }
-]
-```
+### Events
 
-### Fields
+Add one entry per event via **Add Integration → Event Countdown**. Each event has its own **Configure** / **Delete** actions and the following fields:
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | `name` | Yes | Name of the event |
 | `day` | Yes | Day (1-31) |
 | `month` | Yes | Month (1-12) |
-| `year` | No | Birth year / founding year – used to calculate age |
-| `type` | No | `fødselsdag` (default), `bryllup`, or `begivenhed` |
-| `soon` | No | Days before the event is marked as "soon" (default: 60) |
+| `year` | No | Birth year / wedding year — used to calculate age |
+| `type` | Yes | `birthday` (default), `anniversary`, or `event` |
+| `soon` | Yes | Days before the event is marked as "soon" (default: 30) |
 | `picture` | No | Path to image, e.g. `/local/pic/name.jpg` |
-| `disabled` | No | Set to `true` to skip the event |
+| `recurring` | Yes | On = repeats every year. Off = skipped once the date has passed (default depends on `type`) |
+| `delete_after_occurrence` | Yes | On = the event (and its configuration entry) is removed automatically the day after it occurs |
+| `disabled` | Yes | On = the event is ignored until re-enabled |
 
 ### Event types
 
-- **`fødselsdag`** (birthday) – repeats every year, calculates age automatically
-- **`bryllup`** (anniversary) – repeats every year, calculates years automatically
-- **`begivenhed`** (event) – one-time event, skipped once the date has passed
+- **`birthday`** – repeats every year by default, calculates age automatically
+- **`anniversary`** – repeats every year by default, calculates the number of years automatically
+- **`event`** – one-time by default, skipped once the date has passed (unless `recurring` is enabled)
+
+The integration recomputes the upcoming events every hour, and whenever an event is added, edited, or removed.
 
 ## Sensors
 
-The integration creates N sensors (e.g. `sensor.event_countdown_event_1`):
+The Global Configuration entry creates N slot sensors (`sensor.event_countdown_event_0` … `event_(N-1)`), each showing the next upcoming events sorted with the soonest (and "soon") events first:
 
 - **State** – number of days until the event
 - **Attributes:**
-  - `full_name` – human-readable text, e.g. *"Frederik 11th birthday in 5 days"*
+  - `full_name` – human-readable text, e.g. *"Frederik turns 11 in 5 days"*
   - `name` – event name
   - `type` – event type
   - `age` – calculated age / anniversary number
@@ -87,4 +62,4 @@ The integration creates N sensors (e.g. `sensor.event_countdown_event_1`):
   - `event_date` – original event date (YYYY-MM-DD)
   - `entity_picture` – path to image
 
-Sensors are sorted: "soon" events first, then ascending by days remaining.
+If there are fewer upcoming events than sensors, the remaining sensors show `full_name: "No event"`.

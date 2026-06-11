@@ -14,11 +14,15 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
 
 from .const import (
+    CONF_DELETE_AFTER_OCCURRENCE,
     CONF_NUM_SENSORS,
     DEFAULT_NUM_SENSORS,
     DOMAIN,
     ENTRY_TYPE,
     ENTRY_TYPE_EVENT,
+    EVENT_TYPE_ANNIVERSARY,
+    EVENT_TYPE_BIRTHDAY,
+    EVENT_TYPE_EVENT,
     SIGNAL_EVENTS_CHANGED,
 )
 
@@ -39,6 +43,7 @@ async def async_setup_entry(
 
     @callback
     def _refresh(now=None) -> None:
+        hass.async_create_task(_remove_expired_events(hass))
         for sensor in sensors:
             sensor.async_schedule_update_ha_state(force_refresh=True)
 
@@ -59,6 +64,37 @@ def _collect_events(hass: HomeAssistant) -> list[dict]:
     ]
 
 
+async def _remove_expired_events(hass: HomeAssistant) -> None:
+    """Remove event entries that occurred and are flagged for deletion afterwards."""
+    today = date.today()
+
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        if entry.data.get(ENTRY_TYPE) != ENTRY_TYPE_EVENT:
+            continue
+
+        event = {**entry.data.get("event", {}), **entry.options}
+        if not event.get(CONF_DELETE_AFTER_OCCURRENCE):
+            continue
+
+        day = event.get("day")
+        month = event.get("month")
+        if not day or not month:
+            continue
+
+        try:
+            target = date(today.year, month, day)
+        except ValueError:
+            continue
+
+        if target < today:
+            _LOGGER.info(
+                "Event Countdown: removing '%s' (occurred on %s)",
+                event.get("name"),
+                target,
+            )
+            await hass.config_entries.async_remove(entry.entry_id)
+
+
 def _compute_all(events: list[dict]) -> list[dict]:
     """Port of the Node-RED function node: compute, filter and sort events."""
     today = date.today()
@@ -76,10 +112,10 @@ def _compute_all(events: list[dict]) -> list[dict]:
             if not name or not day or not month:
                 continue
 
-            event_type = (event.get("type") or "fødselsdag").lower()
+            event_type = (event.get("type") or EVENT_TYPE_BIRTHDAY).lower()
             recurring = event.get("recurring")
             if recurring is None:
-                recurring = event_type != "begivenhed"
+                recurring = event_type != EVENT_TYPE_EVENT
 
             try:
                 target = date(today.year, month, day)
@@ -98,27 +134,27 @@ def _compute_all(events: list[dict]) -> list[dict]:
             is_soon = days_remaining <= soon_threshold
 
             if days_remaining == 0:
-                dagstekst = "i dag"
+                day_text = "today"
             elif days_remaining == 1:
-                dagstekst = "i morgen"
+                day_text = "tomorrow"
             else:
-                dagstekst = f"om {days_remaining} dage"
+                day_text = f"in {days_remaining} days"
 
-            if event_type == "fødselsdag":
-                base = re.sub(r"fødselsdag", "", name, flags=re.IGNORECASE).strip()
+            if event_type == EVENT_TYPE_BIRTHDAY:
+                base = re.sub(r"birthday", "", name, flags=re.IGNORECASE).strip()
                 full_name = (
-                    f"{base} {age} års fødselsdag {dagstekst}"
+                    f"{base} turns {age} {day_text}"
                     if age is not None
-                    else f"{base} fødselsdag {dagstekst}"
+                    else f"{base}'s birthday {day_text}"
                 )
-            elif event_type == "bryllup":
+            elif event_type == EVENT_TYPE_ANNIVERSARY:
                 full_name = (
-                    f"{age} års {name.lower()} {dagstekst}"
+                    f"{age} year {name.lower()} {day_text}"
                     if age is not None
-                    else f"{name} {dagstekst}"
+                    else f"{name} {day_text}"
                 )
             else:
-                full_name = f"{name} {dagstekst}"
+                full_name = f"{name} {day_text}"
 
             file_name = re.sub(r"[^a-zA-Z0-9æøåÆØÅ ]", "", name).replace(" ", "_")
             picture = event.get("picture") or f"/local/pic/{file_name}.jpg"
@@ -150,17 +186,17 @@ def _compute_all(events: list[dict]) -> list[dict]:
 
 
 class EventSlotSensor(SensorEntity):
-    """One slot in the sorted list of upcoming events (begivenhed0..N-1)."""
+    """One slot in the sorted list of upcoming events (event_0..N-1)."""
 
     _attr_icon = "mdi:calendar-clock"
-    _attr_native_unit_of_measurement = "dage"
+    _attr_native_unit_of_measurement = "days"
     _attr_should_poll = False
 
     def __init__(self, entry: ConfigEntry, slot: int) -> None:
         self._entry = entry
         self._slot = slot
-        self._attr_unique_id = f"{entry.entry_id}_begivenhed{slot}"
-        self._attr_name = f"Begivenhed {slot}"
+        self._attr_unique_id = f"{entry.entry_id}_event{slot}"
+        self._attr_name = f"Event {slot}"
         self._data: dict | None = None
 
     @property
@@ -184,7 +220,7 @@ class EventSlotSensor(SensorEntity):
     def extra_state_attributes(self):
         if not self._data:
             # Mirror the Node-RED fallback message
-            return {"full_name": "Ingen begivenhed", "soon": False}
+            return {"full_name": "No event", "soon": False}
         return {
             "name": self._data["name"],
             "full_name": self._data["full_name"],

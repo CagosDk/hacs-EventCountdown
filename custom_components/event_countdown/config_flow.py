@@ -4,31 +4,35 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import (
+    CONF_DELETE_AFTER_OCCURRENCE,
     CONF_NUM_SENSORS,
     DEFAULT_NUM_SENSORS,
     DOMAIN,
     ENTRY_TYPE,
     ENTRY_TYPE_EVENT,
     ENTRY_TYPE_GLOBAL,
+    EVENT_TYPE_ANNIVERSARY,
+    EVENT_TYPE_BIRTHDAY,
+    EVENT_TYPE_EVENT,
 )
 
 _TYPE_OPTIONS = [
-    {"value": "fødselsdag", "label": "Fødselsdag 🎂"},
-    {"value": "bryllup", "label": "Bryllupsdag 💍"},
-    {"value": "begivenhed", "label": "Begivenhed 📅"},
+    {"value": EVENT_TYPE_BIRTHDAY, "label": "Birthday 🎂"},
+    {"value": EVENT_TYPE_ANNIVERSARY, "label": "Anniversary 💍"},
+    {"value": EVENT_TYPE_EVENT, "label": "Event 📅"},
 ]
 
 _MONTH_OPTIONS = [
-    {"value": "1", "label": "Januar"},
-    {"value": "2", "label": "Februar"},
-    {"value": "3", "label": "Marts"},
+    {"value": "1", "label": "January"},
+    {"value": "2", "label": "February"},
+    {"value": "3", "label": "March"},
     {"value": "4", "label": "April"},
-    {"value": "5", "label": "Maj"},
-    {"value": "6", "label": "Juni"},
-    {"value": "7", "label": "Juli"},
+    {"value": "5", "label": "May"},
+    {"value": "6", "label": "June"},
+    {"value": "7", "label": "July"},
     {"value": "8", "label": "August"},
     {"value": "9", "label": "September"},
-    {"value": "10", "label": "Oktober"},
+    {"value": "10", "label": "October"},
     {"value": "11", "label": "November"},
     {"value": "12", "label": "December"},
 ]
@@ -38,7 +42,7 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
     ev = event or {}
     recurring = ev.get("recurring")
     if recurring is None:
-        recurring = ev.get("type", "fødselsdag") != "begivenhed"
+        recurring = ev.get("type", EVENT_TYPE_BIRTHDAY) != EVENT_TYPE_EVENT
 
     return vol.Schema(
         {
@@ -62,7 +66,7 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
                     min=1900, max=2100, step=1, mode=selector.NumberSelectorMode.BOX
                 )
             ),
-            vol.Required("type", default=ev.get("type", "fødselsdag")): selector.SelectSelector(
+            vol.Required("type", default=ev.get("type", EVENT_TYPE_BIRTHDAY)): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=_TYPE_OPTIONS,
                     mode=selector.SelectSelectorMode.DROPDOWN,
@@ -79,6 +83,10 @@ def _event_schema(event: dict | None = None) -> vol.Schema:
             ): selector.TextSelector(),
             vol.Required("recurring", default=bool(recurring)): selector.BooleanSelector(),
             vol.Required(
+                CONF_DELETE_AFTER_OCCURRENCE,
+                default=bool(ev.get(CONF_DELETE_AFTER_OCCURRENCE, False)),
+            ): selector.BooleanSelector(),
+            vol.Required(
                 "disabled", default=bool(ev.get("disabled", False))
             ): selector.BooleanSelector(),
         }
@@ -93,6 +101,7 @@ def _form_to_event(user_input: dict) -> dict:
         "type": user_input["type"],
         "soon": int(user_input["soon"]),
         "recurring": bool(user_input["recurring"]),
+        CONF_DELETE_AFTER_OCCURRENCE: bool(user_input.get(CONF_DELETE_AFTER_OCCURRENCE, False)),
         "disabled": bool(user_input.get("disabled", False)),
     }
     if user_input.get("year") is not None:
@@ -103,7 +112,7 @@ def _form_to_event(user_input: dict) -> dict:
 
 
 class EventCountdownConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 4
+    VERSION = 5
 
     async def async_step_user(self, user_input=None):
         existing = self.hass.config_entries.async_entries(DOMAIN)
