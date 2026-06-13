@@ -187,7 +187,7 @@ class GlobalOptionsFlow(config_entries.OptionsFlow):
                         CONF_NUM_SENSORS, default=current_num_sensors
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
-                            min=1, max=20, step=1, mode=selector.NumberSelectorMode.BOX
+                            min=1, max=50, step=1, mode=selector.NumberSelectorMode.BOX
                         )
                     ),
                     vol.Required(
